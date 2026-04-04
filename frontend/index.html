@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DermAI — AI Skin Health Platform</title>
+<meta name="description" content="Instant AI-powered skin disease detection, solutions, and nearest dermatologist finder.">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">DermAI</div>
+  <div class="loader-tag">Powered by Gemini AI</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<div id="toast"><span id="toastMsg"></span></div>
+<button class="menu-toggle" onclick="toggleSidebar()" id="menuToggle">☰</button>
+
+<!-- ═══════════════ AUTH ═══════════════ -->
+<div id="authWrap">
+  <!-- LOGIN -->
+  <div id="loginPage" class="auth-wrap">
+    <div class="auth-left">
+      <div class="auth-left-content">
+        <div class="auth-brand">DERM<span class="brand-dim">AI</span></div>
+        <div class="auth-tagline">AI-Powered Skin Health Detection</div>
+        <div class="auth-illustration">🔬</div>
+        <ul class="auth-features">
+          <li>Real-time Gemini AI analysis</li>
+          <li>Upload photo or describe symptoms</li>
+          <li>Emergency level detection</li>
+          <li>Nearest dermatologist on Google Maps</li>
+          <li>Full treatment action plan</li>
+        </ul>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form-box">
+        <div class="auth-eyebrow">Welcome Back</div>
+        <div class="auth-title">Sign in to<br>your account</div>
+        <div class="auth-sub">Enter your credentials to continue</div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" id="loginEmail" placeholder="you@example.com" value="demo@dermai.app">
+        </div>
+        <div class="form-group" style="position:relative">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" id="loginPass" placeholder="••••••••" value="demo123">
+          <span class="input-icon" onclick="togglePass('loginPass')">👁</span>
+        </div>
+        <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Sign In →</button>
+        <div class="auth-divider">or continue with</div>
+        <button class="google-btn" onclick="googleLogin()">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+        <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Sign up free</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIGNUP -->
+  <div id="signupPage" class="auth-wrap hidden">
+    <div class="auth-left">
+      <div class="auth-left-content">
+        <div class="auth-brand">DERM<span class="brand-dim">AI</span></div>
+        <div class="auth-tagline">Join 50,000+ users</div>
+        <div class="auth-illustration">🌿</div>
+        <ul class="auth-features">
+          <li>Free to use — forever</li>
+          <li>Real AI skin analysis</li>
+          <li>Track your skin health</li>
+          <li>Find nearby doctors</li>
+        </ul>
+      </div>
+    </div>
+    <div class="auth-right">
+      <div class="auth-form-box">
+        <div class="auth-eyebrow">Get Started</div>
+        <div class="auth-title">Create your<br>account</div>
+        <div class="auth-sub">Start your skin health journey today</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input class="form-input" type="text" placeholder="Alex" id="signupFirst">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input class="form-input" type="text" placeholder="Chen" id="signupLast">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" placeholder="you@example.com" id="signupEmail">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-input" type="password" placeholder="Min. 6 characters" id="signupPass">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Skin Tone (Fitzpatrick Scale)</label>
+          <div class="skin-tones" id="signupSkinTones">
+            <div class="skin-tone selected" style="background:#FDDBB4" data-label="Type I" onclick="selectSkinTone(this,'signupSkinTones')"></div>
+            <div class="skin-tone" style="background:#F1C27D" data-label="Type II" onclick="selectSkinTone(this,'signupSkinTones')"></div>
+            <div class="skin-tone" style="background:#E0AC69" data-label="Type III" onclick="selectSkinTone(this,'signupSkinTones')"></div>
+            <div class="skin-tone" style="background:#C68642" data-label="Type IV" onclick="selectSkinTone(this,'signupSkinTones')"></div>
+            <div class="skin-tone" style="background:#8D5524" data-label="Type V" onclick="selectSkinTone(this,'signupSkinTones')"></div>
+            <div class="skin-tone" style="background:#4A2912" data-label="Type VI" onclick="selectSkinTone(this,'signupSkinTones')"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="signupBtn" onclick="doSignup()">Create Account →</button>
+        <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN APP ═══════════════ -->
+<div id="mainApp" class="hidden">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">✦</div>
+      <div class="brand-name">DermAI</div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">Main</div>
+      <a class="nav-item active" onclick="showPage('home')" id="nav-home"><span class="nav-icon">⬡</span> Dashboard</a>
+      <a class="nav-item" onclick="showPage('scan')" id="nav-scan"><span class="nav-icon">◎</span> Scan Skin</a>
+      <a class="nav-item" onclick="showPage('assistant')" id="nav-assistant"><span class="nav-icon">◈</span> AI Assistant <span class="nav-badge">AI</span></a>
+      <div class="nav-label" style="margin-top:8px">Analysis</div>
+      <a class="nav-item" onclick="showPage('results')" id="nav-results"><span class="nav-icon">◧</span> Results</a>
+      <a class="nav-item" onclick="showPage('doctors')" id="nav-doctors"><span class="nav-icon">◫</span> Dermatologists</a>
+      <a class="nav-item" onclick="showPage('history')" id="nav-history"><span class="nav-icon">◩</span> History</a>
+      <div class="nav-label" style="margin-top:8px">Account</div>
+      <a class="nav-item" onclick="showPage('settings')" id="nav-settings"><span class="nav-icon">◌</span> Settings</a>
+      <a class="nav-item" onclick="doLogout()"><span class="nav-icon">→</span> Sign Out</a>
+    </nav>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="userAvatar">A</div>
+      <div>
+        <div class="user-name" id="userName">Alex Chen</div>
+        <div class="user-plan">✦ Pro Member</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="icon-btn" onclick="toggleTheme()" title="Toggle theme">◐</div>
+        <div class="icon-btn" id="notifBtn" title="Notifications">◉</div>
+      </div>
+    </div>
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="scan-hero">
+        <div class="scan-hero-content">
+          <div class="hero-eyebrow">AI Dermatology Platform</div>
+          <h1 id="heroTitle">Good day!</h1>
+          <p>Your AI skin health companion. Upload a photo or describe symptoms for an instant Gemini-powered diagnosis.</p>
+          <div class="scan-hero-actions">
+            <button class="btn btn-primary" onclick="showPage('scan')" style="width:auto">Start Scan</button>
+            <button class="btn btn-ghost" onclick="showPage('assistant')" style="width:auto">Ask AI</button>
+          </div>
+        </div>
+        <div class="hero-deco">◈</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">◎</div><div class="stat-value" id="statScans">0</div><div class="stat-label">Total Scans</div></div>
+        <div class="stat-card"><div class="stat-icon" style="color:var(--safe)">◉</div><div class="stat-value" id="statConf" style="color:var(--safe)">—</div><div class="stat-label">Last Confidence</div></div>
+        <div class="stat-card"><div class="stat-icon">◈</div><div class="stat-value" id="statChats">0</div><div class="stat-label">AI Chats</div></div>
+        <div class="stat-card"><div class="stat-icon">◫</div><div class="stat-value" id="statDoctors">5</div><div class="stat-label">Clinics Nearby</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Quick Scan</div>
+          <div class="card-sub" style="margin-bottom:16px">Choose how to analyze your skin</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-primary" onclick="showPage('scan');setScanMode('upload')" style="font-size:0.85rem">📷 Upload Photo</button>
+            <button class="btn btn-ghost" onclick="showPage('scan');setScanMode('camera')" style="font-size:0.85rem;width:100%">📸 Live Camera</button>
+            <button class="btn btn-secondary" onclick="showPage('scan');setScanMode('ai')" style="font-size:0.85rem">🎙️ Describe Symptoms</button>
+          </div>
+        </div>
+        <div class="card" id="lastScanCard">
+          <div class="card-title">Last Result</div>
+          <div id="lastScanPreview" style="margin-top:12px;padding:20px;text-align:center;color:var(--text2);font-size:0.85rem">No scans yet. Start your first scan!</div>
+        </div>
+      </div>
+      <div class="card mt-20">
+        <div class="card-title" style="margin-bottom:14px">Daily Skin Health Tips</div>
+        <div class="tips-grid">
+          <div class="tip-card" style="border-left-color:var(--accent)"><div class="tip-icon">☀️</div><div class="tip-title">Daily SPF</div><div class="tip-desc">Use SPF 30+ every morning</div></div>
+          <div class="tip-card" style="border-left-color:var(--safe)"><div class="tip-icon">💧</div><div class="tip-title">Hydration</div><div class="tip-desc">Drink 8 glasses daily</div></div>
+          <div class="tip-card" style="border-left-color:var(--accent2)"><div class="tip-icon">🌙</div><div class="tip-title">Night Routine</div><div class="tip-desc">Cleanse & moisturize nightly</div></div>
+          <div class="tip-card" style="border-left-color:var(--warn)"><div class="tip-icon">🥗</div><div class="tip-title">Diet</div><div class="tip-desc">Eat antioxidant-rich foods</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCAN -->
+    <div class="page" id="page-scan">
+      <div class="scan-options">
+        <div class="scan-option active" id="opt-upload" onclick="setScanMode('upload')">
+          <span class="scan-option-icon">📷</span>
+          <div class="scan-option-title">Upload Photo</div>
+          <div class="scan-option-desc">Choose from gallery</div>
+        </div>
+        <div class="scan-option" id="opt-camera" onclick="setScanMode('camera')">
+          <span class="scan-option-icon">📸</span>
+          <div class="scan-option-title">Live Camera</div>
+          <div class="scan-option-desc">Real-time scanning</div>
+        </div>
+        <div class="scan-option" id="opt-ai" onclick="setScanMode('ai')">
+          <span class="scan-option-icon">🎙️</span>
+          <div class="scan-option-title">Describe Symptoms</div>
+          <div class="scan-option-desc">AI text analysis</div>
+        </div>
+      </div>
+
+      <div class="card mb-16">
+        <div class="section-title"><span>🎨</span> Your Skin Tone (Fitzpatrick Scale)</div>
+        <div style="font-size:0.85rem;color:var(--text2);margin-bottom:12px">Helps AI provide more accurate results for your specific skin type</div>
+        <div class="skin-tones" id="mainSkinTones">
+          <div class="skin-tone selected" style="background:#FDDBB4" data-label="Type I — Very Fair" onclick="selectSkinTone(this,'mainSkinTones')"></div>
+          <div class="skin-tone" style="background:#F1C27D" data-label="Type II — Fair" onclick="selectSkinTone(this,'mainSkinTones')"></div>
+          <div class="skin-tone" style="background:#E0AC69" data-label="Type III — Medium" onclick="selectSkinTone(this,'mainSkinTones')"></div>
+          <div class="skin-tone" style="background:#C68642" data-label="Type IV — Olive" onclick="selectSkinTone(this,'mainSkinTones')"></div>
+          <div class="skin-tone" style="background:#8D5524" data-label="Type V — Brown" onclick="selectSkinTone(this,'mainSkinTones')"></div>
+          <div class="skin-tone" style="background:#4A2912" data-label="Type VI — Dark" onclick="selectSkinTone(this,'mainSkinTones')"></div>
+        </div>
+      </div>
+
+      <!-- Upload Mode -->
+      <div id="uploadMode">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">Drop your skin photo here</div>
+          <div class="upload-hint">or click to browse — JPG, PNG, HEIC, WEBP</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
+        <img id="previewImg" class="preview-img" alt="Preview">
+        <div id="analyzeBtn" class="hidden" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="analyzeImage()" style="width:auto;padding:14px 32px">
+            🔬 Analyze with Gemini AI
+          </button>
+          <button class="btn btn-secondary" onclick="clearUpload()" style="width:auto;padding:14px 20px;margin-left:10px">Clear</button>
+        </div>
+      </div>
+
+      <!-- Camera Mode -->
+      <div id="cameraMode" class="hidden">
+        <div class="camera-wrap">
+          <video id="cameraFeed" autoplay playsinline></video>
+          <div class="camera-overlay">
+            <div class="camera-guide"></div>
+            <div class="scan-line"></div>
+          </div>
+        </div>
+        <div class="camera-controls">
+          <button class="btn btn-secondary" onclick="switchCamera()">🔄 Flip</button>
+          <div class="capture-btn" onclick="capturePhoto()">📸</div>
+          <button class="btn btn-secondary" onclick="stopCamera()">✕ Stop</button>
+        </div>
+        <canvas id="captureCanvas" class="hidden"></canvas>
+      </div>
+
+      <!-- AI Describe Mode -->
+      <div id="aiMode" class="hidden">
+        <div class="card">
+          <div class="section-title"><span>🎙️</span> Describe Your Symptoms</div>
+          <p style="color:var(--text2);font-size:0.9rem;margin-bottom:16px">Be specific: location, color, texture, size, duration, itching level, any changes</p>
+          <textarea class="chat-input" id="symptomDesc" rows="5" style="width:100%;height:130px;border-radius:12px;padding:14px" placeholder="e.g. I have a red itchy circular patch on my forearm for 2 weeks. It's raised, about 5cm wide, with scaly edges and a clearer centre..."></textarea>
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <button class="voice-btn" id="voiceSymptomBtn" onclick="startVoiceInput('symptomDesc')" style="width:auto;padding:0 16px;border-radius:12px;display:flex;align-items:center;gap:8px">🎙️ Voice</button>
+            <button class="btn btn-primary" onclick="analyzeSymptoms()" style="flex:1">🤖 Analyze Symptoms</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Key warning -->
+      <div id="apiKeyWarning" class="hidden" style="margin-top:16px">
+        <div class="alert-card alert-warn">
+          <div style="font-weight:700;margin-bottom:6px">⚙️ Gemini API Key Required</div>
+          <div style="font-size:0.85rem">Add your <code>GEMINI_API_KEY</code> to <code>backend/.env</code> to enable real AI analysis. Get a free key at <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="page" id="page-results">
+      <div id="noResults" class="empty-state">
+        <div class="empty-icon">🔬</div>
+        <div class="empty-title">No Results Yet</div>
+        <div class="empty-sub">Take a skin scan to see AI-powered results here</div>
+        <button class="btn btn-primary" style="width:auto;margin-top:20px" onclick="showPage('scan')">Start Scanning</button>
+      </div>
+      <div id="resultContent" class="hidden"></div>
+    </div>
+
+    <!-- AI ASSISTANT -->
+    <div class="page" id="page-assistant">
+      <div id="assistantNoScan" class="empty-state">
+        <div class="empty-icon">◈</div>
+        <div class="empty-title">Scan First</div>
+        <div class="empty-sub">The AI Solution Finder builds a personalised plan based on your actual scan result.</div>
+        <button class="btn btn-primary" style="width:auto;margin-top:20px" onclick="showPage('scan')">Take a Scan →</button>
+      </div>
+      <div id="assistantMain" class="hidden">
+        <div id="scanContextBanner" class="context-banner">
+          <div class="banner-emoji" id="bannerEmoji">◈</div>
+          <div style="flex:1">
+            <div class="banner-condition" id="bannerCondition">No scan yet</div>
+            <div class="banner-meta">Confidence: <strong id="bannerConf">—</strong> · AI Solution Plan</div>
+          </div>
+          <button class="btn btn-ghost" style="padding:7px 14px;font-size:0.75rem;width:auto" onclick="showPage('scan')">Re-scan</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+          <button class="sol-tab active" onclick="switchSolTab(this,'plan')">📋 Action Plan</button>
+          <button class="sol-tab" onclick="switchSolTab(this,'products')">🧴 Products</button>
+          <button class="sol-tab" onclick="switchSolTab(this,'avoid')">🚫 Avoid</button>
+          <button class="sol-tab" onclick="switchSolTab(this,'timeline')">🗓️ Timeline</button>
+          <button class="sol-tab" onclick="switchSolTab(this,'ask')">💬 Ask AI</button>
+        </div>
+        <div class="sol-panel" id="sol-plan"><div id="actionPlanContent"></div></div>
+        <div class="sol-panel hidden" id="sol-products"><div id="productsContent"></div></div>
+        <div class="sol-panel hidden" id="sol-avoid"><div id="avoidContent"></div></div>
+        <div class="sol-panel hidden" id="sol-timeline"><div id="timelineContent"></div></div>
+        <div class="sol-panel hidden" id="sol-ask">
+          <div id="contextPrompts" class="quick-prompts-row"></div>
+          <div class="chat-wrap">
+            <div class="chat-messages" id="chatMessages">
+              <div class="msg msg-ai">
+                <div class="ai-avatar">🧠</div>
+                <div>
+                  <div class="msg-bubble">💬 Ask me anything practical about your skin condition — I give direct, actionable advice.<br><br>Try: <em>"Can I go swimming?"</em> · <em>"What cream to buy?"</em> · <em>"How long to heal?"</em> · <em>"Is it contagious?"</em></div>
+                  <div class="msg-time">Now</div>
+                </div>
+              </div>
+            </div>
+            <div class="chat-input-bar">
+              <button class="voice-btn" id="voiceChatBtn" onclick="startVoiceChat()" title="Voice input">🎙️</button>
+              <textarea class="chat-input" id="chatInput" placeholder="Ask about your condition..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+              <button class="send-btn" onclick="sendChat()">➤</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCTORS -->
+    <div class="page" id="page-doctors">
+      <div class="card mb-20">
+        <div class="section-title"><span>📍</span> Find Dermatologists Near You</div>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:16px">Find verified dermatologists in your area</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input class="form-input" style="flex:1;min-width:200px" placeholder="🔍 Search by city or condition..." id="clinicSearch" onkeydown="if(event.key==='Enter')searchClinics()">
+          <button class="btn btn-primary" onclick="searchClinics()">Search →</button>
+          <button class="btn btn-ghost" onclick="useMyLocation()">📍 My Location</button>
+        </div>
+      </div>
+
+      <!-- Google Map Embed -->
+      <div id="mapContainer" class="map-container mb-20">
+        <div id="mapPlaceholder" class="map-placeholder">
+          <div class="map-pin">📍</div>
+          <div style="font-weight:700;margin-bottom:6px">Interactive Map</div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-bottom:16px">Click "My Location" to show nearby clinics on Google Maps</div>
+          <button class="btn btn-primary" onclick="useMyLocation()" style="width:auto;font-size:0.82rem">📍 Enable Location</button>
+        </div>
+        <iframe id="mapIframe" class="hidden" width="100%" height="280" style="border:0;border-radius:12px" allowfullscreen loading="lazy"></iframe>
+        <div id="mapLink" class="hidden" style="margin-top:10px;text-align:center">
+          <a id="openMapsBtn" href="#" target="_blank" class="btn btn-ghost" style="width:auto;font-size:0.82rem">🗺️ Open in Google Maps</a>
+        </div>
+      </div>
+
+      <div class="section-title"><span>🏥</span> Nearby Clinics</div>
+      <div class="clinic-list" id="clinicList">
+        <div class="empty-state" style="padding:40px 20px">
+          <div class="empty-icon" style="font-size:2rem">🏥</div>
+          <div class="empty-sub">Click "My Location" or search to find clinics</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div class="section-title" style="margin-bottom:0"><span>📋</span> Scan History</div>
+        <button class="btn btn-ghost" onclick="exportHistory()" style="padding:9px 16px;font-size:0.82rem">📤 Export PDF</button>
+      </div>
+      <div class="history-grid" id="historyGrid">
+        <div class="empty-state" style="grid-column:1/-1;padding:60px 20px">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">No History Yet</div>
+          <div class="empty-sub">Your scan results will appear here</div>
+          <button class="btn btn-primary" style="width:auto;margin-top:16px" onclick="showPage('scan')">Start Scanning</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="card mb-16">
+        <div class="card-title" style="margin-bottom:18px">⚙️ API Configuration</div>
+        <div class="form-group">
+          <label class="form-label">Gemini API Key</label>
+          <div style="display:flex;gap:10px">
+            <input class="form-input" type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+            <button class="btn btn-primary" onclick="saveGeminiKey()" style="width:auto;padding:12px 20px">Save</button>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text2);margin-top:6px">Get free key at <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Google Maps API Key</label>
+          <div style="display:flex;gap:10px">
+            <input class="form-input" type="password" id="mapsKeyInput" placeholder="AIzaSy...">
+            <button class="btn btn-primary" onclick="saveMapsKey()" style="width:auto;padding:12px 20px">Save</button>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text2);margin-top:6px">Enables live Google Maps integration for doctor search</div>
+        </div>
+        <div id="apiStatus" style="margin-top:14px"></div>
+      </div>
+      <div class="card mb-16">
+        <div class="card-title" style="margin-bottom:18px">🎨 Appearance</div>
+        <div class="settings-row">
+          <div><div style="font-weight:600;font-size:0.9rem">Dark Mode</div><div style="font-size:0.78rem;color:var(--text2)">Toggle light/dark theme</div></div>
+          <div class="toggle on" id="themeToggle" onclick="toggleTheme()"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:18px">👤 Profile</div>
+        <div class="form-group"><label class="form-label">Display Name</label><input class="form-input" id="profileNameInput" placeholder="Your name"></div>
+        <div class="form-group">
+          <label class="form-label">Skin Tone</label>
+          <div class="skin-tones" id="settingsSkinTones">
+            <div class="skin-tone selected" style="background:#FDDBB4" data-label="Type I" onclick="selectSkinTone(this,'settingsSkinTones')"></div>
+            <div class="skin-tone" style="background:#F1C27D" data-label="Type II" onclick="selectSkinTone(this,'settingsSkinTones')"></div>
+            <div class="skin-tone" style="background:#E0AC69" data-label="Type III" onclick="selectSkinTone(this,'settingsSkinTones')"></div>
+            <div class="skin-tone" style="background:#C68642" data-label="Type IV" onclick="selectSkinTone(this,'settingsSkinTones')"></div>
+            <div class="skin-tone" style="background:#8D5524" data-label="Type V" onclick="selectSkinTone(this,'settingsSkinTones')"></div>
+            <div class="skin-tone" style="background:#4A2912" data-label="Type VI" onclick="selectSkinTone(this,'settingsSkinTones')"></div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveProfile()" style="width:auto;padding:12px 24px">Save Changes</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Analyzing Overlay -->
+<div class="analyzing-overlay hidden" id="analyzingOverlay">
+  <div class="analyzing-card">
+    <div class="analyzing-anim">🔬</div>
+    <div class="analyzing-title">Analyzing with Gemini AI</div>
+    <div style="color:var(--text2);font-size:0.85rem;margin-bottom:16px">Please wait while we process your skin image...</div>
+    <ul class="analyzing-steps" id="analyzingSteps">
+      <li class="analyzing-step active" id="step1"><span class="step-icon">⏳</span> Uploading image securely...</li>
+      <li class="analyzing-step" id="step2"><span class="step-icon">⬡</span> Running Gemini Vision AI...</li>
+      <li class="analyzing-step" id="step3"><span class="step-icon">⬡</span> Generating action plan...</li>
+      <li class="analyzing-step" id="step4"><span class="step-icon">⬡</span> Finalizing results...</li>
+    </ul>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
