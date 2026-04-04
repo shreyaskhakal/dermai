@@ -98,7 +98,8 @@ async function callGemini(parts) {
       generationConfig: {
         temperature: 0.2,
         topP: 0.8,
-        maxOutputTokens: 2048
+        maxOutputTokens: 4096,
+        responseMimeType: 'application/json'
       },
       safetySettings: [
         { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
