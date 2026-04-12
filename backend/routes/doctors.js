@@ -165,4 +165,54 @@ router.get('/mapskey', (req, res) => {
   res.json({ hasKey, key: hasKey ? key : null });
 });
 
+// GET /api/doctors/nearest - Fetch nearest clinic and phone number via Details API
+router.get('/nearest', async (req, res) => {
+  try {
+    const { lat, lng } = req.query;
+    if (!lat || !lng) return res.status(400).json({ error: 'Missing coordinates' });
+    
+    const GMAPS_KEY = process.env.GOOGLE_MAPS_API_KEY;
+    if (GMAPS_KEY && GMAPS_KEY !== 'your_google_maps_api_key_here') {
+      const fetch = require('node-fetch');
+      
+      const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&rankby=distance&type=doctor&keyword=dermatologist&key=${GMAPS_KEY}`;
+      const searchRes = await fetch(searchUrl);
+      const searchData = await searchRes.json();
+      
+      if (searchData.status === 'OK' && searchData.results.length > 0) {
+        const placeId = searchData.results[0].place_id;
+        
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_phone_number,formatted_address&key=${GMAPS_KEY}`;
+        const detailsRes = await fetch(detailsUrl);
+        const detailsData = await detailsRes.json();
+        
+        if (detailsData.status === 'OK') {
+          return res.json({ 
+            success: true, 
+            doctor: {
+              name: detailsData.result.name,
+              address: detailsData.result.formatted_address,
+              phone: detailsData.result.formatted_phone_number || 'No phone listed'
+            },
+            source: 'google'
+          });
+        }
+      }
+    }
+    
+    res.json({
+      success: true,
+      doctor: {
+        name: DEMO_DOCTORS[0].name,
+        address: DEMO_DOCTORS[0].address,
+        phone: DEMO_DOCTORS[0].phone
+      },
+      source: 'demo'
+    });
+  } catch (err) {
+    console.error('Nearest doctor error:', err);
+    res.status(500).json({ error: 'Server error fetching nearest clinic' });
+  }
+});
+
 module.exports = router;

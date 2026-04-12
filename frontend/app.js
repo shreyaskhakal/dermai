@@ -24,6 +24,7 @@ const state = {
 
 // ── Init ─────────────────────────────────────────────────────
 let authProvider;
+let analytics;
 window.addEventListener('DOMContentLoaded', async () => {
   // Fetch Config
   try {
@@ -32,6 +33,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (typeof firebase !== 'undefined' && configData.firebaseConfig && configData.firebaseConfig.apiKey) {
       firebase.initializeApp(configData.firebaseConfig);
       authProvider = new firebase.auth.GoogleAuthProvider();
+      if (firebase.analytics) {
+        analytics = firebase.analytics();
+      }
     }
   } catch (e) {
     console.warn("Firebase config fetch or init error:", e);
@@ -453,6 +457,7 @@ function renderResults(result, imageData) {
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
         <button class="btn btn-primary" onclick="showPage('assistant');checkAssistantState()" style="width:auto">💊 View Full Solution Plan</button>
+        <button class="btn btn-ghost" onclick="bookAppointment(this)" style="width:auto">📅 Book Appointment</button>
         <button class="btn btn-ghost" onclick="showPage('doctors')" style="width:auto">📍 Find Dermatologist</button>
         <button class="btn btn-secondary" onclick="showPage('scan')" style="width:auto">🔄 New Scan</button>
       </div>
@@ -463,6 +468,51 @@ function renderResults(result, imageData) {
   // Populate assistant
   populateAssistant(result);
   updateStats();
+  
+  // Track Analytics
+  if (typeof firebase !== 'undefined' && firebase.analytics) {
+    try {
+      const region = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Unknown';
+      firebase.analytics().logEvent('scan_completed', { 
+        region: region,
+        method: result.method || 'unknown',
+        emergencyLevel: result.emergencyLevel || 'low'
+      });
+    } catch(e) { console.warn('Analytics error', e) }
+  }
+}
+
+// ── Booking Logic ────────────────────────────────────────────
+async function bookAppointment(btn) {
+  const ogText = btn.innerHTML;
+  btn.innerText = 'Locating closest clinic...';
+  btn.disabled = true;
+
+  if (!navigator.geolocation) {
+    showToast('Geolocation is not supported by your browser', '❌');
+    btn.innerHTML = ogText; btn.disabled = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const res = await fetch(`${API}/doctors/nearest?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
+      const data = await res.json();
+      
+      if (data.success && data.doctor) {
+        btn.innerHTML = ogText; btn.disabled = false;
+        alert(`nearest clinic found securely via google maps!\n\n🏥 ${data.doctor.name}\n📍 ${data.doctor.address}\n📞 ${data.doctor.phone}\n\nPlease call them immediately to set up your DermAI referral appointment.`);
+      } else {
+        throw new Error('No doctor found');
+      }
+    } catch(e) {
+      showToast('Error booking appointment', '❌');
+      btn.innerHTML = ogText; btn.disabled = false;
+    }
+  }, (err) => {
+    showToast('Location permission denied', '❌');
+    btn.innerHTML = ogText; btn.disabled = false;
+  });
 }
 
 // ── Assistant / Solution Plan ────────────────────────────────
