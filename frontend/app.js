@@ -23,26 +23,20 @@ const state = {
 };
 
 // ── Init ─────────────────────────────────────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyD6pYRXZZMCepPfQBoQDnbHUVJhhwYzK_I",
-  authDomain: "dermai-5f506.firebaseapp.com",
-  projectId: "dermai-5f506",
-  storageBucket: "dermai-5f506.firebasestorage.app",
-  messagingSenderId: "161541734763",
-  appId: "1:161541734763:web:f3666f083ca95b717c0c2e",
-  measurementId: "G-JP038R3H50"
-};
 let authProvider;
-if (typeof firebase !== 'undefined') {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Fetch Config
   try {
-    firebase.initializeApp(firebaseConfig);
-    authProvider = new firebase.auth.GoogleAuthProvider();
+    const configRes = await fetch(`${API}/config`);
+    const configData = await configRes.json();
+    if (typeof firebase !== 'undefined' && configData.firebaseConfig && configData.firebaseConfig.apiKey) {
+      firebase.initializeApp(configData.firebaseConfig);
+      authProvider = new firebase.auth.GoogleAuthProvider();
+    }
   } catch (e) {
-    console.warn("Firebase Init Error:", e);
+    console.warn("Firebase config fetch or init error:", e);
   }
-}
 
-window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('popstate', (e) => {
     if (e.state && e.state.page) showPage(e.state.page, false);
     else showPage(window.location.hash.replace('#', '') || 'home', false);
@@ -119,26 +113,40 @@ async function doSignup() {
 }
 
 async function googleLogin() {
-  if (typeof firebase === 'undefined' || !firebase.apps.length || firebaseConfig.apiKey === "YOUR_API_KEY") {
-    showToast('Firebase not configured. Please add config keys in app.js.', '⚠️');
-    return;
+  let fallbackMode = false;
+  if (typeof firebase === 'undefined' || !firebase.apps.length) {
+    console.warn('Firebase not configured. Falling back to mock login.');
+    showToast('Real Google Sign-In needs config. Using demo bypass...', 'ℹ️');
+    fallbackMode = true;
   }
+  
+  let name = 'Demo User';
+  let email = 'demo@dermai.app';
+
+  if (!fallbackMode) {
+    try {
+      const result = await firebase.auth().signInWithPopup(authProvider);
+      name = result.user.displayName || name;
+      email = result.user.email || email;
+    } catch (e) {
+      console.warn('Popup failed or cancelled. Falling back to mock login.', e);
+      showToast('Popup failed. Using demo bypass...', 'ℹ️');
+      fallbackMode = true;
+    }
+  }
+
   try {
-    const result = await firebase.auth().signInWithPopup(authProvider);
-    const user = result.user;
-    const name = user.displayName;
-    const email = user.email;
     const r = await fetch(`${API}/auth/google`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email })
     });
     const d = await r.json();
-    if (!r.ok) { showToast('Google login failed', '❌'); return; }
+    if (!r.ok) { showToast('Google login backend failed', '❌'); return; }
     state.token = d.token; state.user = d.user;
     localStorage.setItem('dermai_token', d.token);
     localStorage.setItem('dermai_user', JSON.stringify(d.user));
     enterApp();
-  } catch (e) { console.error(e); showToast('Google login cancelled or failed', '❌'); }
+  } catch (e) { console.error(e); showToast('Cannot connect to server', '❌'); }
 }
 
 function doLogout() {

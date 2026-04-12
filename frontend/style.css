@@ -119,8 +119,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .scan-hero::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent3),transparent)}
 .scan-hero-content{position:relative;z-index:2}
 .hero-eyebrow{font-family:var(--font2);font-size:.68rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-.scan-hero h1{font-family:var(--font2);font-size:1.9rem;font-weight:900;margin-bottom:8px;letter-spacing:1px}
-.scan-hero p{opacity:.6;font-size:.95rem;margin-bottom:22px;font-weight:300;max-width:440px}
+.scan-hero h1{font-family:var(--font2);font-size:1.9rem;font-weight:900;margin-bottom:8px;letter-spacing:1px;color:#FFFFFF!important}
+.scan-hero p{opacity:.8;font-size:.95rem;margin-bottom:22px;font-weight:300;max-width:440px;color:#ECECEC!important}
 .scan-hero-actions{display:flex;gap:12px;flex-wrap:wrap}
 .hero-deco{position:absolute;right:30px;top:20px;font-size:7rem;color:var(--accent);opacity:.05;animation:float 3s ease-in-out infinite}
 
@@ -343,3 +343,11 @@ code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:monos
   .grid-2{grid-template-columns:1fr}
 }
 @media(max-width:600px){.grid-2{grid-template-columns:1fr}}
+
+/* TRANSLATION WIDGET */
+.goog-te-gadget { font-family:var(--font)!important; color:transparent!important; font-size:0px!important; }
+.goog-te-gadget .goog-te-combo { background-color:var(--card2)!important; color:var(--text)!important; border:1px solid var(--border)!important; border-radius:6px!important; padding:4px 8px!important; font-family:var(--font)!important; font-size:12px!important; outline:none; transition:all 0.2s; }
+.goog-te-gadget .goog-te-combo:hover { border-color:var(--accent)!important; }
+.goog-logo-link { display:none!important; }
+.goog-te-gadget span { display:none!important; }
+.skiptranslate.goog-te-gadget { margin-top:2px; }
