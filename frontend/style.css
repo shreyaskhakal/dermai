@@ -11,6 +11,7 @@
   --bg:#F5F5F5; --bg2:#EBEBEB; --card:#FFFFFF; --card2:#F0F0F0;
   --text:#111111; --text2:#666666; --border:rgba(0,0,0,0.08);
   --shadow:0 8px 32px rgba(0,0,0,0.1); --shadow2:0 2px 8px rgba(0,0,0,0.06);
+  --font:'Roboto',sans-serif; --font2:'Outfit',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}

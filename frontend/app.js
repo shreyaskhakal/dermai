@@ -3,8 +3,8 @@
 //  All API calls go to the Node.js backend (port 3001)
 // ============================================================
 
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-  ? 'http://localhost:3001/api' 
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3001/api'
   : '/api';
 
 // ── App State ────────────────────────────────────────────────
@@ -23,14 +23,52 @@ const state = {
 };
 
 // ── Init ─────────────────────────────────────────────────────
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyD6pYRXZZMCepPfQBoQDnbHUVJhhwYzK_I",
+  authDomain: "dermai-5f506.firebaseapp.com",
+  projectId: "dermai-5f506",
+  storageBucket: "dermai-5f506.firebasestorage.app",
+  messagingSenderId: "161541734763",
+  appId: "1:161541734763:web:f3666f083ca95b717c0c2e",
+  measurementId: "G-JP038R3H50"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+  
+};
+let authProvider;
+if (typeof firebase !== 'undefined') {
+  try {
+    firebase.initializeApp(firebaseConfig);
+    authProvider = new firebase.auth.GoogleAuthProvider();
+  } catch (e) {
+    console.warn("Firebase Init Error:", e);
+  }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.page) showPage(e.state.page, false);
+    else showPage(window.location.hash.replace('#', '') || 'home', false);
+  });
   setTimeout(() => {
     const loader = document.getElementById('loader');
     loader.style.opacity = '0';
     setTimeout(() => loader.classList.add('hidden'), 500);
   }, 1600);
 
-  // Check saved session
+  // Check saved session (temporarily disabled for testing login)
+  /*
   const savedToken = localStorage.getItem('dermai_token');
   const savedUser = localStorage.getItem('dermai_user');
   if (savedToken && savedUser) {
@@ -38,6 +76,7 @@ window.addEventListener('DOMContentLoaded', () => {
     state.user = JSON.parse(savedUser);
     enterApp();
   }
+  */
 
   // Restore settings
   const savedTheme = localStorage.getItem('dermai_theme');
@@ -94,8 +133,15 @@ async function doSignup() {
 }
 
 async function googleLogin() {
-  const name = 'Google User'; const email = 'google@dermai.app';
+  if (typeof firebase === 'undefined' || !firebase.apps.length || firebaseConfig.apiKey === "YOUR_API_KEY") {
+    showToast('Firebase not configured. Please add config keys in app.js.', '⚠️');
+    return;
+  }
   try {
+    const result = await firebase.auth().signInWithPopup(authProvider);
+    const user = result.user;
+    const name = user.displayName;
+    const email = user.email;
     const r = await fetch(`${API}/auth/google`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email })
@@ -106,7 +152,7 @@ async function googleLogin() {
     localStorage.setItem('dermai_token', d.token);
     localStorage.setItem('dermai_user', JSON.stringify(d.user));
     enterApp();
-  } catch { showToast('Cannot connect to server', '❌'); }
+  } catch (e) { console.error(e); showToast('Google login cancelled or failed', '❌'); }
 }
 
 function doLogout() {
@@ -127,7 +173,8 @@ function enterApp() {
   document.getElementById('userName').textContent = `${state.user?.firstName || ''} ${state.user?.lastName || ''}`.trim();
   document.getElementById('userAvatar').textContent = (state.user?.firstName?.[0] || 'U').toUpperCase();
   loadHistory();
-  showPage('home');
+  const initialPage = window.location.hash.replace('#', '') || 'home';
+  showPage(initialPage);
 }
 
 function showLogin() { document.getElementById('loginPage').classList.remove('hidden'); document.getElementById('signupPage').classList.add('hidden'); }
@@ -135,7 +182,7 @@ function showSignup() { document.getElementById('signupPage').classList.remove('
 function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
 
 // ── Navigation ───────────────────────────────────────────────
-function showPage(page) {
+function showPage(page, updateHistory = true) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const pg = document.getElementById(`page-${page}`);
@@ -143,7 +190,10 @@ function showPage(page) {
   const nav = document.getElementById(`nav-${page}`);
   if (nav) nav.classList.add('active');
   state.currentPage = page;
-  const titles = { home:'Dashboard', scan:'Scan Skin', assistant:'AI Assistant', results:'Results', doctors:'Dermatologists', history:'History', settings:'Settings' };
+  if (updateHistory) {
+    history.pushState({ page }, '', `#${page}`);
+  }
+  const titles = { home: 'Dashboard', scan: 'Scan Skin', assistant: 'AI Assistant', results: 'Results', doctors: 'Dermatologists', history: 'History', settings: 'Settings' };
   document.getElementById('pageTitle').textContent = titles[page] || page;
   if (page === 'doctors') loadDoctors();
   if (page === 'history') renderHistory();
@@ -168,7 +218,7 @@ function getSelectedSkinTone(groupId) {
 
 // ── Scan Mode ────────────────────────────────────────────────
 function setScanMode(mode) {
-  ['upload','camera','ai'].forEach(m => {
+  ['upload', 'camera', 'ai'].forEach(m => {
     document.getElementById(`opt-${m}`)?.classList.remove('active');
     document.getElementById(`${m}Mode`)?.classList.add('hidden');
   });
@@ -315,7 +365,7 @@ function showApiKeyWarning() {
 // ── Analyzing Overlay ────────────────────────────────────────
 function showAnalyzing() {
   document.getElementById('analyzingOverlay').classList.remove('hidden');
-  document.querySelectorAll('.analyzing-step').forEach(s => { s.classList.remove('active','done'); });
+  document.querySelectorAll('.analyzing-step').forEach(s => { s.classList.remove('active', 'done'); });
   document.getElementById('step1').classList.add('active');
 }
 function hideAnalyzing() { document.getElementById('analyzingOverlay').classList.add('hidden'); }
@@ -548,7 +598,7 @@ function appendMsg(text, role) {
   const div = document.createElement('div');
   div.className = `msg msg-${role}`;
   if (role === 'ai') {
-    div.innerHTML = `<div class="ai-avatar">🧠</div><div><div class="msg-bubble">${text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div><div class="msg-time">${time}</div></div>`;
+    div.innerHTML = `<div class="ai-avatar">🧠</div><div><div class="msg-bubble">${text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')}</div><div class="msg-time">${time}</div></div>`;
   } else {
     div.innerHTML = `<div><div class="msg-bubble">${text}</div><div class="msg-time" style="text-align:right">${time}</div></div>`;
   }
@@ -733,7 +783,7 @@ function renderHistory() {
     return;
   }
   grid.innerHTML = state.scanHistory.map(h => {
-    const date = new Date(h.timestamp).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    const date = new Date(h.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const confColor = h.confidence >= 85 ? 'var(--safe)' : h.confidence >= 70 ? 'var(--accent)' : 'var(--warn)';
     const icon = h.emergencyLevel === 'high' ? '🔴' : h.emergencyLevel === 'medium' ? '🟠' : '🟢';
     return `<div class="history-card" onclick="viewHistoryResult('${h.id}')">
