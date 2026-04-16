@@ -7,7 +7,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 
 const GEMINI_KEY = () => process.env.GEMINI_API_KEY;
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
 
 // In-memory scan history store (keyed by userId)
 const { historyStore: scanHistory } = require('../data/store');
