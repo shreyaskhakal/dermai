@@ -114,10 +114,19 @@ async function callGemini(parts, retries = 3) {
 
     if (!response.ok) {
       const err = await response.text();
-      // Retry on 503 (Service Unavailable) or 429 (Too Many Requests)
-      if ((response.status === 503 || response.status === 429) && attempt < retries - 1) {
+
+      // Retry on 503 (Service Unavailable) — short delays
+      if (response.status === 503 && attempt < retries - 1) {
         const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s...
-        console.warn(`Gemini API busy (Status ${response.status}). Retrying in ${delay}ms...`);
+        console.warn(`Gemini API unavailable (503). Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+
+      // Retry on 429 (Rate Limited) — longer delays to let quota reset
+      if (response.status === 429 && attempt < retries - 1) {
+        const delay = (attempt + 1) * 10000; // 10s, 20s...
+        console.warn(`Gemini API rate limited (429). Waiting ${delay}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
@@ -125,7 +134,7 @@ async function callGemini(parts, retries = 3) {
       if (response.status === 503) {
         throw new Error('The AI model is currently experiencing high demand. Please try again in a few moments.');
       } else if (response.status === 429) {
-        throw new Error('Too many requests to the AI model. Please wait a moment and try again.');
+        throw new Error('You have hit the Gemini API rate limit. Please wait about 30 seconds and try again.');
       }
       throw new Error(`Gemini API error ${response.status}: ${err}`);
     }
