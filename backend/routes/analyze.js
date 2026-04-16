@@ -82,7 +82,7 @@ Return ONLY valid JSON (no markdown, no extra text):
 }`;
 
 // ── Call Gemini API ──────────────────────────────────────────
-async function callGemini(parts) {
+async function callGemini(parts, retries = 3) {
   const fetch = require('node-fetch');
   const key = GEMINI_KEY();
 
@@ -90,41 +90,58 @@ async function callGemini(parts) {
     throw new Error('GEMINI_API_KEY not configured. Please add your Gemini API key to the .env file.');
   }
 
-  const response = await fetch(`${GEMINI_URL}?key=${key}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts }],
-      generationConfig: {
-        temperature: 0.2,
-        topP: 0.8,
-        maxOutputTokens: 4096
-      },
-      safetySettings: [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-      ]
-    })
-  });
+  const payload = {
+    contents: [{ parts }],
+    generationConfig: {
+      temperature: 0.2,
+      topP: 0.8,
+      maxOutputTokens: 4096
+    },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+    ]
+  };
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini API error ${response.status}: ${err}`);
-  }
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const response = await fetch(`${GEMINI_URL}?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini');
+    if (!response.ok) {
+      const err = await response.text();
+      // Retry on 503 (Service Unavailable) or 429 (Too Many Requests)
+      if ((response.status === 503 || response.status === 429) && attempt < retries - 1) {
+        const delay = Math.pow(2, attempt + 1) * 1000; // 2s, 4s...
+        console.warn(`Gemini API busy (Status ${response.status}). Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      if (response.status === 503) {
+        throw new Error('The AI model is currently experiencing high demand. Please try again in a few moments.');
+      } else if (response.status === 429) {
+        throw new Error('Too many requests to the AI model. Please wait a moment and try again.');
+      }
+      throw new Error(`Gemini API error ${response.status}: ${err}`);
+    }
 
-  // Strip markdown code fences if present
-  const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('Empty response from Gemini');
 
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {
-    throw new Error('Gemini returned invalid JSON: ' + cleaned.substring(0, 200));
+    // Strip markdown code fences if present
+    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    try {
+      return JSON.parse(cleaned);
+    } catch (e) {
+      throw new Error('Gemini returned invalid JSON: ' + cleaned.substring(0, 200));
+    }
   }
 }
 

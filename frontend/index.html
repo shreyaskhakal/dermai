@@ -481,6 +481,38 @@ function googleTranslateElementInit() {
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-analytics-compat.js"></script>
 
+<!-- Floating Help Button -->
+<div class="fab-help" onclick="toggleHelpModal()" title="Help & Guide">?</div>
+
+<!-- Help Modal -->
+<div class="help-overlay hidden" id="helpModalOverlay" onclick="if(event.target===this)toggleHelpModal()">
+  <div class="help-modal">
+    <div class="help-header">
+      <div class="help-title"><span>📘</span> DermAI Quick Guide</div>
+      <button class="help-close" onclick="toggleHelpModal()">✕</button>
+    </div>
+    <div class="help-content">
+      <div class="help-step">
+        <div class="help-step-icon">1</div>
+        <div class="help-step-text"><strong>Start a Scan</strong>Upload a clear photo of your skin concern, use the live camera, or describe your symptoms to the AI.</div>
+      </div>
+      <div class="help-step">
+        <div class="help-step-icon">2</div>
+        <div class="help-step-text"><strong>Review Insights</strong>Gemini Vision AI will calculate a confidence score, identify the condition, and build a personalized treatment timeline.</div>
+      </div>
+      <div class="help-step">
+        <div class="help-step-icon">3</div>
+        <div class="help-step-text"><strong>Take Action</strong>Use the AI Chat assistant for immediate advice, or click "Book Appointment" to instantly locate a nearby dermatologist via Google Maps.</div>
+      </div>
+      <div class="help-support-box">
+        <div style="font-weight:700;margin-bottom:6px;font-size:0.9rem">Need technical help?</div>
+        <div style="font-size:0.8rem;color:var(--text2);margin-bottom:12px">If the app isn't loading or Google Login fails, make sure your API Keys are placed in the Vercel Dashboard.</div>
+        <a href="mailto:support@dermai.app" class="btn btn-secondary" style="font-size:0.8rem;padding:8px">✉️ Contact Support</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

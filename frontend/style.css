@@ -344,6 +344,22 @@ code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:monos
 }
 @media(max-width:600px){.grid-2{grid-template-columns:1fr}}
 
+/* HELP FAB & MODAL */
+.fab-help{position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent3),var(--accent));color:#0D0D0D;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;cursor:pointer;z-index:8000;box-shadow:var(--shadow2);transition:all .3s;}
+.fab-help:hover{transform:translateY(-3px) scale(1.05);box-shadow:var(--glow);}
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px);animation:fadeIn .2s ease;}
+.help-modal{background:var(--card);color:var(--text);border-radius:var(--radius);width:90%;max-width:480px;border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;animation:fadeUp .3s ease;}
+.help-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--card2);}
+.help-title{font-family:var(--font2);font-weight:800;font-size:1.1rem;display:flex;align-items:center;gap:8px;}
+.help-close{background:none;border:none;color:var(--text2);font-size:1.2rem;cursor:pointer;transition:color .2s;}
+.help-close:hover{color:var(--danger);}
+.help-content{padding:24px;}
+.help-step{display:flex;gap:14px;margin-bottom:16px;}
+.help-step-icon{width:32px;height:32px;border-radius:50%;background:rgba(212,175,55,.1);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;}
+.help-step-text{font-size:0.9rem;line-height:1.5;color:var(--text2);}
+.help-step-text strong{color:var(--text);display:block;margin-bottom:2px;}
+.help-support-box{margin-top:20px;padding:16px;background:rgba(212,175,55,.05);border:1px dashed var(--border2);border-radius:10px;text-align:center;}
+
 /* TRANSLATION WIDGET */
 .goog-te-gadget { font-family:var(--font)!important; color:transparent!important; font-size:0px!important; }
 .goog-te-gadget .goog-te-combo { background-color:var(--card2)!important; color:var(--text)!important; border:1px solid var(--border)!important; border-radius:6px!important; padding:4px 8px!important; font-family:var(--font)!important; font-size:12px!important; outline:none; transition:all 0.2s; }

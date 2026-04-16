@@ -944,3 +944,15 @@ function showToast(msg, icon = 'ℹ️') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
 }
+
+// ── Help & Guide Modal ───────────────────────────────────────
+function toggleHelpModal() {
+  const modal = document.getElementById('helpModalOverlay');
+  if (modal) {
+    if (modal.classList.contains('hidden')) {
+      modal.classList.remove('hidden');
+    } else {
+      modal.classList.add('hidden');
+    }
+  }
+}
