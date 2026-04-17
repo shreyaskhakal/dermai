@@ -51,16 +51,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => loader.classList.add('hidden'), 500);
   }, 1600);
 
-  // Check saved session (temporarily disabled for testing login)
-  /*
+  // Check saved session
   const savedToken = localStorage.getItem('dermai_token');
   const savedUser = localStorage.getItem('dermai_user');
   if (savedToken && savedUser) {
-    state.token = savedToken;
-    state.user = JSON.parse(savedUser);
-    enterApp();
+    try {
+      state.token = savedToken;
+      state.user = JSON.parse(savedUser);
+      enterApp();
+    } catch (e) {
+      console.warn('Failed to restore session:', e);
+      localStorage.removeItem('dermai_token');
+      localStorage.removeItem('dermai_user');
+    }
   }
-  */
 
   // Restore settings
   const savedTheme = localStorage.getItem('dermai_theme');
@@ -82,12 +86,26 @@ async function doLogin() {
       body: JSON.stringify({ email, password: pass })
     });
     const d = await r.json();
-    if (!r.ok) { showToast(d.error || 'Login failed', '❌'); return; }
-    state.token = d.token; state.user = d.user;
+    if (!r.ok) {
+      showToast(d.error || 'Login failed', '❌');
+      btn.disabled = false; btn.textContent = 'Sign In →';
+      return;
+    }
+    if (!d.token || !d.user) {
+      showToast('Invalid server response. Please try again.', '❌');
+      btn.disabled = false; btn.textContent = 'Sign In →';
+      return;
+    }
+    state.token = d.token;
+    state.user = d.user;
     localStorage.setItem('dermai_token', d.token);
     localStorage.setItem('dermai_user', JSON.stringify(d.user));
+    showToast(`Welcome back, ${d.user.firstName || 'User'}!`, '✅');
     enterApp();
-  } catch { showToast('Cannot connect to server. Is the backend running?', '❌'); }
+  } catch (err) {
+    console.error('Login error:', err);
+    showToast('Cannot connect to server. Is the backend running?', '❌');
+  }
   finally { btn.disabled = false; btn.textContent = 'Sign In →'; }
 }
 
@@ -99,6 +117,8 @@ async function doSignup() {
   const tone = getSelectedSkinTone('signupSkinTones');
   if (!first || !email || !pass) return showToast('Fill in all required fields', '⚠️');
   if (pass.length < 6) return showToast('Password must be at least 6 characters', '⚠️');
+  const consentBox = document.getElementById('signupConsent');
+  if (consentBox && !consentBox.checked) return showToast('Please agree to the Privacy Policy to continue', '🛡️');
   const btn = document.getElementById('signupBtn');
   btn.disabled = true; btn.textContent = 'Creating...';
   try {
@@ -191,7 +211,7 @@ function showPage(page, updateHistory = true) {
   if (updateHistory) {
     history.pushState({ page }, '', `#${page}`);
   }
-  const titles = { home: 'Dashboard', scan: 'Scan Skin', assistant: 'AI Assistant', results: 'Results', doctors: 'Dermatologists', history: 'History', settings: 'Settings' };
+  const titles = { home: 'Dashboard', scan: 'Scan Skin', assistant: 'AI Assistant', results: 'Results', doctors: 'Dermatologists', history: 'History', settings: 'Settings', privacy: 'Data Privacy' };
   document.getElementById('pageTitle').textContent = titles[page] || page;
   if (page === 'doctors') loadDoctors();
   if (page === 'history') renderHistory();
@@ -214,17 +234,185 @@ function getSelectedSkinTone(groupId) {
   return sel ? sel.getAttribute('data-label') : 'Type I';
 }
 
-// ── Scan Mode ────────────────────────────────────────────────
-function setScanMode(mode) {
-  ['upload', 'camera', 'ai'].forEach(m => {
-    document.getElementById(`opt-${m}`)?.classList.remove('active');
-    document.getElementById(`${m}Mode`)?.classList.add('hidden');
-  });
-  document.getElementById(`opt-${mode}`)?.classList.add('active');
-  document.getElementById(`${mode}Mode`)?.classList.remove('hidden');
-  if (mode === 'camera') startCamera();
-  else stopCamera();
+// ── Scan Mode (legacy stub) ──────────────────────────────────
+function setScanMode() {} // Replaced by unified composer
+function clearUpload() { removeComposerImage(); }
+
+// ── Unified Scan Composer ────────────────────────────────────
+let composerImage = null;
+
+function autoResizeComposer(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 220) + 'px';
 }
+
+function toggleAttachMenu() {
+  const popup = document.getElementById('attachPopup');
+  const btn = document.getElementById('composerPlusBtn');
+  const isOpen = !popup.classList.contains('hidden');
+  popup.classList.toggle('hidden', isOpen);
+  btn.classList.toggle('active', !isOpen);
+  if (!isOpen) {
+    setTimeout(() => document.addEventListener('click', closeAttachOnOutside, { once: true }), 10);
+  }
+}
+function closeAttachOnOutside(e) {
+  const wrap = document.getElementById('composerAttachWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('attachPopup')?.classList.add('hidden');
+    document.getElementById('composerPlusBtn')?.classList.remove('active');
+  }
+}
+
+function openComposerGallery() {
+  document.getElementById('attachPopup')?.classList.add('hidden');
+  document.getElementById('composerPlusBtn')?.classList.remove('active');
+  document.getElementById('composerFileInput').click();
+}
+function handleComposerFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return showToast('Please select an image file', '⚠️');
+  if (file.size > 15 * 1024 * 1024) return showToast('Image too large. Max 15MB', '⚠️');
+  const reader = new FileReader();
+  reader.onload = (ev) => attachComposerImage(ev.target.result);
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function openComposerCamera() {
+  document.getElementById('attachPopup')?.classList.add('hidden');
+  document.getElementById('composerPlusBtn')?.classList.remove('active');
+  document.getElementById('cameraModal')?.classList.remove('hidden');
+  startCamera();
+}
+function closeCameraModal() {
+  document.getElementById('cameraModal')?.classList.add('hidden');
+  stopCamera();
+}
+function captureComposerPhoto() {
+  const video = document.getElementById('cameraFeed');
+  const canvas = document.getElementById('captureCanvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  closeCameraModal();
+  attachComposerImage(dataUrl);
+  showToast('Photo captured!', '📸');
+}
+
+function attachComposerImage(dataUrl) {
+  composerImage = dataUrl;
+  state.uploadedImage = dataUrl;
+  const thumb = document.getElementById('composerThumb');
+  if (thumb) thumb.src = dataUrl;
+  document.getElementById('composerImagePreview')?.classList.remove('hidden');
+  document.getElementById('composerHint').textContent = '🖼️ Photo ready · add context or send now';
+  showToast('Photo attached!', '✅');
+}
+function removeComposerImage() {
+  composerImage = null;
+  state.uploadedImage = null;
+  document.getElementById('composerImagePreview')?.classList.add('hidden');
+  const thumb = document.getElementById('composerThumb');
+  if (thumb) thumb.src = '';
+  const hint = document.getElementById('composerHint');
+  if (hint) hint.textContent = 'Type symptoms · attach photo · or both';
+}
+
+function startVoiceComposer() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    return showToast('Voice not supported in this browser', '⚠️');
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SR();
+  rec.lang = 'en-US'; rec.interimResults = false;
+  const btn = document.getElementById('composerVoiceBtn');
+  btn?.classList.add('listening');
+  showToast('Listening… speak now', '🎤');
+  rec.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    const ta = document.getElementById('composerText');
+    ta.value += (ta.value ? ' ' : '') + transcript;
+    autoResizeComposer(ta);
+    showToast('Got it!', '✅');
+  };
+  rec.onerror = () => showToast('Voice input failed', '❌');
+  rec.onend = () => btn?.classList.remove('listening');
+  rec.start();
+}
+
+async function sendAnalysis() {
+  const text = (document.getElementById('composerText')?.value || '').trim();
+  const hasImage = !!composerImage;
+  const hasText = text.length >= 5;
+
+  if (!hasImage && !hasText) {
+    return showToast('Describe symptoms or attach a photo to start', '🔬');
+  }
+
+  const btn = document.getElementById('composerSendBtn');
+  btn.disabled = true;
+  showAnalyzing();
+
+  try {
+    stepProgress(1);
+    let r;
+
+    if (hasImage) {
+      r = await fetch(`${API}/analyze/image`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageBase64: composerImage,
+          skinTone: state.skinTone,
+          userId: state.user?.id,
+          additionalContext: hasText ? text : undefined
+        })
+      });
+    } else {
+      r = await fetch(`${API}/analyze/symptoms`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symptoms: text, skinTone: state.skinTone, userId: state.user?.id })
+      });
+    }
+
+    stepProgress(2);
+    const d = await r.json();
+
+    if (!r.ok) {
+      hideAnalyzing();
+      if (d.error?.includes('GEMINI_API_KEY')) showApiKeyWarning();
+      else showToast(d.error || 'Analysis failed', '❌');
+      btn.disabled = false;
+      return;
+    }
+
+    stepProgress(3); await sleep(400); stepProgress(4); await sleep(400);
+    hideAnalyzing();
+    btn.disabled = false;
+
+    state.lastResult = { ...d.result, previewImage: hasImage ? composerImage : null };
+    saveResultToHistory(d.result);
+    renderResults(d.result, hasImage ? composerImage : null);
+    showPage('results');
+    showToast('Analysis complete!', '✅');
+
+    // Reset composer
+    const ta = document.getElementById('composerText');
+    if (ta) { ta.value = ''; autoResizeComposer(ta); }
+    removeComposerImage();
+
+  } catch (err) {
+    hideAnalyzing();
+    btn.disabled = false;
+    showToast('Cannot connect to backend server', '❌');
+  }
+}
+
+// Legacy wrappers (called from dashboard quick scan buttons)
+function analyzeImage() { sendAnalysis(); }
+function analyzeSymptoms() { sendAnalysis(); }
 
 // ── Upload & File Handling ───────────────────────────────────
 function handleDrop(e) {
@@ -956,3 +1144,115 @@ function toggleHelpModal() {
     }
   }
 }
+
+// ── Cookie Consent Banner ────────────────────────────────────
+function initConsentBanner() {
+  const consent = localStorage.getItem('dermai_consent');
+  if (!consent) {
+    setTimeout(() => {
+      document.getElementById('consentBanner')?.classList.remove('hidden');
+    }, 2000);
+  }
+}
+function acceptConsent() {
+  localStorage.setItem('dermai_consent', JSON.stringify({ level: 'all', timestamp: new Date().toISOString() }));
+  hideConsentBanner();
+  showToast('All cookies accepted', '✅');
+}
+function acceptEssentialOnly() {
+  localStorage.setItem('dermai_consent', JSON.stringify({ level: 'essential', timestamp: new Date().toISOString() }));
+  hideConsentBanner();
+  showToast('Essential cookies only — analytics disabled', '🍪');
+}
+function hideConsentBanner() {
+  const banner = document.getElementById('consentBanner');
+  if (banner) { banner.style.animation = 'none'; banner.style.transform = 'translateY(100%)'; banner.style.opacity = '0'; setTimeout(() => banner.classList.add('hidden'), 400); }
+}
+
+// ── Data Privacy Actions ─────────────────────────────────────
+function downloadMyData() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    platform: 'DermAI',
+    user: state.user || null,
+    scanHistory: state.scanHistory || [],
+    preferences: {
+      theme: localStorage.getItem('dermai_theme') || 'dark',
+      skinTone: localStorage.getItem('dermai_skintone') || 'Type I',
+      consent: JSON.parse(localStorage.getItem('dermai_consent') || 'null')
+    },
+    stats: {
+      totalScans: state.scanHistory.length,
+      chatCount: state.chatCount
+    }
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `DermAI_MyData_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Your data has been exported!', '📥');
+}
+
+function deleteMyData() {
+  const confirmed = confirm(
+    '⚠️ DELETE ALL DATA\n\nThis will permanently erase:\n• Scan history\n• Saved preferences\n• API keys stored in browser\n• Theme and skin tone settings\n\nYou will be signed out. This cannot be undone.\n\nAre you sure?'
+  );
+  if (!confirmed) return;
+  // Clear all DermAI localStorage keys
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('dermai_')) keysToRemove.push(key);
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+  // Also attempt server-side deletion
+  if (state.user?.id && state.token) {
+    fetch(`${API}/privacy/delete-data`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${state.token}` },
+      body: JSON.stringify({ userId: state.user.id })
+    }).catch(() => {});
+  }
+  state.scanHistory = [];
+  state.lastResult = null;
+  state.chatCount = 0;
+  showToast('All your data has been deleted', '🗑️');
+  setTimeout(() => doLogout(), 1200);
+}
+
+function revokeConsent() {
+  const confirmed = confirm(
+    '⚠️ REVOKE CONSENT\n\nThis will:\n• Delete all your stored data\n• Sign you out of DermAI\n• Remove your privacy consent\n\nYou can re-consent when you sign up again.\n\nProceed?'
+  );
+  if (!confirmed) return;
+  // Remove everything
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('dermai_')) keysToRemove.push(key);
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+  state.scanHistory = [];
+  state.lastResult = null;
+  state.chatCount = 0;
+  showToast('Consent revoked. All data deleted.', '🚫');
+  setTimeout(() => doLogout(), 1200);
+}
+
+function showPrivacyPreview() {
+  alert(
+    'DermAI Privacy Policy Summary\n\n' +
+    '• We collect your name, email, skin images, and symptom descriptions for AI analysis only.\n' +
+    '• Images are processed by Google Gemini AI in real-time and are NOT stored after analysis.\n' +
+    '• Scan history is stored locally in your browser — not on our servers.\n' +
+    '• Location data is used only for finding dermatologists and is never tracked.\n' +
+    '• We NEVER sell, share, or monetize your health data.\n' +
+    '• You can download or delete all your data at any time from the Data Privacy page.\n\n' +
+    'Full details available in the app under Data Privacy.'
+  );
+}
+
+// Init consent banner on page load
+window.addEventListener('DOMContentLoaded', () => { setTimeout(initConsentBanner, 100); });

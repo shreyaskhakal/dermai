@@ -118,6 +118,12 @@ function googleTranslateElementInit() {
             <div class="skin-tone" style="background:#4A2912" data-label="Type VI" onclick="selectSkinTone(this,'signupSkinTones')"></div>
           </div>
         </div>
+        <div class="form-group" style="margin-bottom:18px">
+          <label class="privacy-consent-label">
+            <input type="checkbox" id="signupConsent" class="consent-checkbox">
+            <span class="consent-text">I agree to DermAI's <a onclick="event.stopPropagation();showPrivacyPreview()" class="consent-link">Privacy Policy</a> and consent to the processing of my health data for AI skin analysis.</span>
+          </label>
+        </div>
         <button class="btn btn-primary" id="signupBtn" onclick="doSignup()">Create Account →</button>
         <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
       </div>
@@ -143,6 +149,7 @@ function googleTranslateElementInit() {
       <a class="nav-item" onclick="showPage('history')" id="nav-history"><span class="nav-icon">◩</span> History</a>
       <div class="nav-label" style="margin-top:8px">Account</div>
       <a class="nav-item" onclick="showPage('settings')" id="nav-settings"><span class="nav-icon">◌</span> Settings</a>
+      <a class="nav-item" onclick="showPage('privacy')" id="nav-privacy"><span class="nav-icon">◑</span> Data Privacy</a>
       <a class="nav-item" onclick="doLogout()"><span class="nav-icon">→</span> Sign Out</a>
     </nav>
     <div class="sidebar-user">
@@ -210,29 +217,12 @@ function googleTranslateElementInit() {
       </div>
     </div>
 
-    <!-- SCAN -->
+    <!-- SCAN — Unified Composer -->
     <div class="page" id="page-scan">
-      <div class="scan-options">
-        <div class="scan-option active" id="opt-upload" onclick="setScanMode('upload')">
-          <span class="scan-option-icon">📷</span>
-          <div class="scan-option-title">Upload Photo</div>
-          <div class="scan-option-desc">Choose from gallery</div>
-        </div>
-        <div class="scan-option" id="opt-camera" onclick="setScanMode('camera')">
-          <span class="scan-option-icon">📸</span>
-          <div class="scan-option-title">Live Camera</div>
-          <div class="scan-option-desc">Real-time scanning</div>
-        </div>
-        <div class="scan-option" id="opt-ai" onclick="setScanMode('ai')">
-          <span class="scan-option-icon">🎙️</span>
-          <div class="scan-option-title">Describe Symptoms</div>
-          <div class="scan-option-desc">AI text analysis</div>
-        </div>
-      </div>
 
-      <div class="card mb-16">
-        <div class="section-title"><span>🎨</span> Your Skin Tone (Fitzpatrick Scale)</div>
-        <div style="font-size:0.85rem;color:var(--text2);margin-bottom:12px">Helps AI provide more accurate results for your specific skin type</div>
+      <!-- Compact Skin Tone Row -->
+      <div class="composer-tone-row card mb-16">
+        <div class="composer-tone-label">🎨 Skin Tone</div>
         <div class="skin-tones" id="mainSkinTones">
           <div class="skin-tone selected" style="background:#FDDBB4" data-label="Type I — Very Fair" onclick="selectSkinTone(this,'mainSkinTones')"></div>
           <div class="skin-tone" style="background:#F1C27D" data-label="Type II — Fair" onclick="selectSkinTone(this,'mainSkinTones')"></div>
@@ -241,52 +231,98 @@ function googleTranslateElementInit() {
           <div class="skin-tone" style="background:#8D5524" data-label="Type V — Brown" onclick="selectSkinTone(this,'mainSkinTones')"></div>
           <div class="skin-tone" style="background:#4A2912" data-label="Type VI — Dark" onclick="selectSkinTone(this,'mainSkinTones')"></div>
         </div>
+        <div class="composer-tone-hint">Helps AI provide more accurate results</div>
       </div>
 
-      <!-- Upload Mode -->
-      <div id="uploadMode">
-        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
-          <div class="upload-icon">📁</div>
-          <div class="upload-text">Drop your skin photo here</div>
-          <div class="upload-hint">or click to browse — JPG, PNG, HEIC, WEBP</div>
+      <!-- Main Composer Card -->
+      <div class="composer-card">
+        <div class="composer-header">
+          <div class="composer-header-icon">🔬</div>
+          <div>
+            <div class="composer-header-title">Skin Analysis Composer</div>
+            <div class="composer-header-sub">Describe symptoms, attach a photo, or do both for the best results</div>
+          </div>
         </div>
-        <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileUpload(event)">
-        <img id="previewImg" class="preview-img" alt="Preview">
-        <div id="analyzeBtn" class="hidden" style="margin-top:16px">
-          <button class="btn btn-primary" onclick="analyzeImage()" style="width:auto;padding:14px 32px">
-            🔬 Analyze with Gemini AI
+
+        <!-- Attached Image Preview -->
+        <div id="composerImagePreview" class="composer-image-preview hidden">
+          <div class="composer-img-chip">
+            <img id="composerThumb" class="composer-thumb" alt="Attached photo">
+            <div class="composer-img-info">
+              <div class="composer-img-label">📷 Photo attached</div>
+              <div class="composer-img-hint">Will be analyzed with Gemini Vision AI</div>
+            </div>
+            <button class="composer-remove-img" onclick="removeComposerImage()" title="Remove image">✕</button>
+          </div>
+        </div>
+
+        <!-- Text Input Area -->
+        <div class="composer-input-wrap">
+          <textarea
+            id="composerText"
+            class="composer-textarea"
+            placeholder="Describe your skin concern… e.g. red itchy patch on forearm for 2 weeks, raised with scaly edges"
+            rows="3"
+            oninput="autoResizeComposer(this)"
+          ></textarea>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="composer-toolbar">
+          <!-- Attach + popup -->
+          <div class="composer-attach-wrap" id="composerAttachWrap">
+            <button class="composer-plus-btn" id="composerPlusBtn" onclick="toggleAttachMenu()" title="Add photo">
+              <span id="plusIcon">+</span>
+            </button>
+            <div class="attach-popup hidden" id="attachPopup">
+              <button class="attach-popup-item" onclick="openComposerGallery()">
+                <span class="attach-popup-icon">🖼️</span>
+                <span>Gallery</span>
+              </button>
+              <button class="attach-popup-item" onclick="openComposerCamera()">
+                <span class="attach-popup-icon">📷</span>
+                <span>Camera</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="composer-input-hint" id="composerHint">Type symptoms · attach photo · or both</div>
+
+          <!-- Voice Button -->
+          <button class="composer-voice-btn" id="composerVoiceBtn" onclick="startVoiceComposer()" title="Voice input">
+            🎙️
           </button>
-          <button class="btn btn-secondary" onclick="clearUpload()" style="width:auto;padding:14px 20px;margin-left:10px">Clear</button>
+
+          <!-- Send / Analyze -->
+          <button class="composer-send-btn" id="composerSendBtn" onclick="sendAnalysis()" title="Analyze">
+            <span class="send-arrow">➤</span>
+          </button>
         </div>
+
+        <!-- Hidden file input -->
+        <input type="file" id="composerFileInput" accept="image/*" class="hidden" onchange="handleComposerFile(event)">
       </div>
 
-      <!-- Camera Mode -->
-      <div id="cameraMode" class="hidden">
-        <div class="camera-wrap">
-          <video id="cameraFeed" autoplay playsinline></video>
-          <div class="camera-overlay">
-            <div class="camera-guide"></div>
-            <div class="scan-line"></div>
+      <!-- Camera Modal -->
+      <div class="camera-modal hidden" id="cameraModal">
+        <div class="camera-modal-inner">
+          <div class="camera-modal-header">
+            <div class="camera-modal-title">📷 Live Camera</div>
+            <button class="camera-modal-close" onclick="closeCameraModal()">✕</button>
           </div>
-        </div>
-        <div class="camera-controls">
-          <button class="btn btn-secondary" onclick="switchCamera()">🔄 Flip</button>
-          <div class="capture-btn" onclick="capturePhoto()">📸</div>
-          <button class="btn btn-secondary" onclick="stopCamera()">✕ Stop</button>
-        </div>
-        <canvas id="captureCanvas" class="hidden"></canvas>
-      </div>
-
-      <!-- AI Describe Mode -->
-      <div id="aiMode" class="hidden">
-        <div class="card">
-          <div class="section-title"><span>🎙️</span> Describe Your Symptoms</div>
-          <p style="color:var(--text2);font-size:0.9rem;margin-bottom:16px">Be specific: location, color, texture, size, duration, itching level, any changes</p>
-          <textarea class="chat-input" id="symptomDesc" rows="5" style="width:100%;height:130px;border-radius:12px;padding:14px" placeholder="e.g. I have a red itchy circular patch on my forearm for 2 weeks. It's raised, about 5cm wide, with scaly edges and a clearer centre..."></textarea>
-          <div style="display:flex;gap:10px;margin-top:12px">
-            <button class="voice-btn" id="voiceSymptomBtn" onclick="startVoiceInput('symptomDesc')" style="width:auto;padding:0 16px;border-radius:12px;display:flex;align-items:center;gap:8px">🎙️ Voice</button>
-            <button class="btn btn-primary" onclick="analyzeSymptoms()" style="flex:1">🤖 Analyze Symptoms</button>
+          <div class="camera-wrap" style="border-radius:12px;overflow:hidden;">
+            <video id="cameraFeed" autoplay playsinline></video>
+            <div class="camera-overlay">
+              <div class="camera-guide"></div>
+              <div class="scan-line"></div>
+            </div>
           </div>
+          <div class="camera-controls">
+            <button class="btn btn-secondary" onclick="switchCamera()">🔄 Flip</button>
+            <div class="capture-btn" onclick="captureComposerPhoto()">📸</div>
+            <button class="btn btn-secondary" onclick="closeCameraModal()">✕ Close</button>
+          </div>
+          <canvas id="captureCanvas" class="hidden"></canvas>
         </div>
       </div>
 
@@ -458,6 +494,138 @@ function googleTranslateElementInit() {
       </div>
     </div>
 
+    <!-- PRIVACY -->
+    <div class="page" id="page-privacy">
+      <div class="privacy-hero">
+        <div class="privacy-hero-icon">🛡️</div>
+        <div class="privacy-hero-content">
+          <h2 class="privacy-hero-title">Your Data, Your Control</h2>
+          <p class="privacy-hero-sub">DermAI is committed to protecting your sensitive health data. We follow industry best practices to ensure your privacy.</p>
+        </div>
+      </div>
+
+      <div class="privacy-grid">
+        <!-- Data Collection -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-icon">📋</div>
+            <h3 class="privacy-card-title">Data We Collect</h3>
+          </div>
+          <ul class="privacy-list">
+            <li><span class="privacy-dot blue"></span><strong>Account Info</strong> — Name, email, and skin tone preference</li>
+            <li><span class="privacy-dot gold"></span><strong>Skin Images</strong> — Photos you upload for AI analysis (processed in-memory, not stored permanently on our servers)</li>
+            <li><span class="privacy-dot green"></span><strong>Symptom Text</strong> — Descriptions you type for text-based analysis</li>
+            <li><span class="privacy-dot purple"></span><strong>Scan History</strong> — Condition names, confidence scores, and timestamps (stored locally in your browser)</li>
+            <li><span class="privacy-dot orange"></span><strong>Location Data</strong> — Only when you explicitly use "Find Dermatologist" — never tracked in background</li>
+            <li><span class="privacy-dot red"></span><strong>Usage Analytics</strong> — Anonymous scan counts and region data via Firebase Analytics (if configured)</li>
+          </ul>
+        </div>
+
+        <!-- How We Use Data -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-icon">⚙️</div>
+            <h3 class="privacy-card-title">How We Use Your Data</h3>
+          </div>
+          <ul class="privacy-list">
+            <li><span class="privacy-dot green"></span>Images are sent to <strong>Google Gemini AI</strong> for real-time analysis and are <strong>not retained</strong> after processing</li>
+            <li><span class="privacy-dot green"></span>Your scan history is stored <strong>locally in your browser</strong> (localStorage) — we do not upload it to any cloud database</li>
+            <li><span class="privacy-dot green"></span>Location data is used <strong>only once per request</strong> to find nearby dermatologists — it is never stored or tracked</li>
+            <li><span class="privacy-dot gold"></span>Anonymous analytics help us improve the platform — no personal health data is included</li>
+            <li><span class="privacy-dot green"></span><strong>We never sell, share, or monetize</strong> your personal or health data</li>
+          </ul>
+        </div>
+
+        <!-- Data Storage & Security -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-icon">🔒</div>
+            <h3 class="privacy-card-title">Data Storage & Security</h3>
+          </div>
+          <ul class="privacy-list">
+            <li><span class="privacy-dot blue"></span>All API communication uses <strong>HTTPS encryption</strong> in transit</li>
+            <li><span class="privacy-dot blue"></span>Authentication tokens are <strong>JWT-signed</strong> and expire after 7 days</li>
+            <li><span class="privacy-dot blue"></span>Passwords are hashed with <strong>bcrypt</strong> (10 salt rounds) — never stored in plain text</li>
+            <li><span class="privacy-dot gold"></span>Scan history, theme preferences, and API keys are stored in your <strong>browser's localStorage</strong></li>
+            <li><span class="privacy-dot blue"></span>Rate limiting protects against abuse (100 requests per 15 minutes)</li>
+          </ul>
+        </div>
+
+        <!-- Third-Party Services -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-icon">🌐</div>
+            <h3 class="privacy-card-title">Third-Party Services</h3>
+          </div>
+          <div class="third-party-grid">
+            <div class="third-party-item">
+              <div class="tp-icon">🤖</div>
+              <div class="tp-name">Google Gemini AI</div>
+              <div class="tp-desc">Processes skin images & symptoms for diagnosis. Subject to <a href="https://ai.google.dev/terms" target="_blank" rel="noopener" class="tp-link">Google AI Terms</a>.</div>
+            </div>
+            <div class="third-party-item">
+              <div class="tp-icon">🔥</div>
+              <div class="tp-name">Firebase Auth & Analytics</div>
+              <div class="tp-desc">Handles Google Sign-In and anonymous usage metrics. Subject to <a href="https://firebase.google.com/terms" target="_blank" rel="noopener" class="tp-link">Firebase Terms</a>.</div>
+            </div>
+            <div class="third-party-item">
+              <div class="tp-icon">🗺️</div>
+              <div class="tp-name">Google Maps Platform</div>
+              <div class="tp-desc">Locates nearby dermatologists. Uses location only when requested. Subject to <a href="https://cloud.google.com/maps-platform/terms" target="_blank" rel="noopener" class="tp-link">Maps Terms</a>.</div>
+            </div>
+            <div class="third-party-item">
+              <div class="tp-icon">🌍</div>
+              <div class="tp-name">Google Translate</div>
+              <div class="tp-desc">Provides in-page language translation widget. Subject to <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="tp-link">Google Terms</a>.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Your Rights -->
+      <div class="privacy-card" style="margin-top:16px">
+        <div class="privacy-card-header">
+          <div class="privacy-card-icon">✊</div>
+          <h3 class="privacy-card-title">Your Rights</h3>
+        </div>
+        <p class="privacy-rights-intro">You have full control over your data. Use the actions below at any time:</p>
+        <div class="privacy-actions">
+          <div class="privacy-action-card">
+            <div class="pa-icon">📥</div>
+            <div class="pa-info">
+              <div class="pa-title">Download My Data</div>
+              <div class="pa-desc">Export all your locally stored data (scan history, settings, preferences) as a JSON file.</div>
+            </div>
+            <button class="btn btn-ghost" onclick="downloadMyData()" style="width:auto;padding:10px 18px;font-size:.78rem;flex-shrink:0">Export Data</button>
+          </div>
+          <div class="privacy-action-card delete">
+            <div class="pa-icon">🗑️</div>
+            <div class="pa-info">
+              <div class="pa-title">Delete My Data</div>
+              <div class="pa-desc">Permanently erase all your local data including scan history, saved keys, and preferences. This cannot be undone.</div>
+            </div>
+            <button class="btn btn-danger" onclick="deleteMyData()" style="width:auto;padding:10px 18px;font-size:.78rem;flex-shrink:0">Delete All</button>
+          </div>
+          <div class="privacy-action-card">
+            <div class="pa-icon">🚫</div>
+            <div class="pa-info">
+              <div class="pa-title">Revoke Consent</div>
+              <div class="pa-desc">Withdraw your data processing consent. This will sign you out and delete all stored data.</div>
+            </div>
+            <button class="btn btn-ghost" onclick="revokeConsent()" style="width:auto;padding:10px 18px;font-size:.78rem;flex-shrink:0">Revoke</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="privacy-footer">
+        <div class="privacy-footer-icon">🛡️</div>
+        <div>
+          <strong>Last updated:</strong> April 2026<br>
+          <span style="color:var(--text2);font-size:.82rem">Questions about your privacy? Contact <a href="mailto:privacy@dermai.app" style="color:var(--accent)">privacy@dermai.app</a></span>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -509,6 +677,24 @@ function googleTranslateElementInit() {
         <div style="font-size:0.8rem;color:var(--text2);margin-bottom:12px">If the app isn't loading or Google Login fails, make sure your API Keys are placed in the Vercel Dashboard.</div>
         <a href="mailto:support@dermai.app" class="btn btn-secondary" style="font-size:0.8rem;padding:8px">✉️ Contact Support</a>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cookie Consent Banner -->
+<div id="consentBanner" class="consent-banner hidden">
+  <div class="consent-banner-inner">
+    <div class="consent-banner-text">
+      <div class="consent-banner-icon">🍪</div>
+      <div>
+        <strong>Your Privacy Matters</strong>
+        <p>DermAI uses essential cookies and localStorage to save your preferences and scan history. We also use Firebase Analytics for anonymous usage metrics. No health data is shared with third parties.</p>
+      </div>
+    </div>
+    <div class="consent-banner-actions">
+      <button class="btn btn-primary" onclick="acceptConsent()" style="width:auto;padding:10px 22px;font-size:.82rem">Accept All</button>
+      <button class="btn btn-ghost" onclick="acceptEssentialOnly()" style="width:auto;padding:10px 22px;font-size:.82rem">Essential Only</button>
+      <button class="btn btn-secondary" onclick="showPage('privacy');hideConsentBanner()" style="width:auto;padding:10px 18px;font-size:.78rem">Learn More</button>
     </div>
   </div>
 </div>

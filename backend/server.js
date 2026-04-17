@@ -30,6 +30,7 @@ app.use('/api/analyze', require('./routes/analyze'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/doctors', require('./routes/doctors'));
 app.use('/api/history', require('./routes/history'));
+app.use('/api/privacy', require('./routes/privacy'));
 
 // ── Public Config ───────────────────────────────────────────
 app.get('/api/config', (req, res) => {
