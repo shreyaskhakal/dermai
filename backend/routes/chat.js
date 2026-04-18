@@ -4,7 +4,7 @@
 const express = require('express');
 const router = express.Router();
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 async function callGeminiChat(systemPrompt, userMessage) {
   const fetch = require('node-fetch');
