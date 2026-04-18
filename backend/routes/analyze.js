@@ -7,7 +7,7 @@ const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 
 const GEMINI_KEY = () => process.env.GEMINI_API_KEY;
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 // In-memory scan history store (keyed by userId)
 const { historyStore: scanHistory } = require('../data/store');
@@ -106,6 +106,7 @@ async function callGemini(parts, retries = 3) {
   };
 
   for (let attempt = 0; attempt < retries; attempt++) {
+    console.log(`Calling Gemini URL: ${GEMINI_URL}`);
     const response = await fetch(`${GEMINI_URL}?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
