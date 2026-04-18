@@ -544,8 +544,7 @@ async function analyzeSymptoms() {
 
 function showApiKeyWarning() {
   document.getElementById('apiKeyWarning')?.classList.remove('hidden');
-  showPage('scan');
-  showToast('Add Gemini API key in Settings to enable AI analysis', '⚙️');
+  showToast('Server missing Gemini API Key. Contact administrator.', '⚙️');
 }
 
 // ── Analyzing Overlay ────────────────────────────────────────
