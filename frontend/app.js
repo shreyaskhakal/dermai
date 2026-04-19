@@ -19,7 +19,7 @@ const state = {
   cameraStream: null,
   facingMode: 'environment',
   skinTone: 'Type I',
-  isDark: true
+  isDark: false
 };
 
 // ── Init ─────────────────────────────────────────────────────
@@ -68,7 +68,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Restore settings
   const savedTheme = localStorage.getItem('dermai_theme');
-  if (savedTheme === 'light') { document.body.classList.add('light'); state.isDark = false; syncThemeToggle(); }
+  if (savedTheme === 'dark') { 
+    document.body.classList.remove('light'); 
+    state.isDark = true; 
+  } else {
+    document.body.classList.add('light'); 
+    state.isDark = false; 
+  }
+  syncThemeToggle();
   const savedTone = localStorage.getItem('dermai_skintone');
   if (savedTone) state.skinTone = savedTone;
 });
@@ -1176,7 +1183,7 @@ function downloadMyData() {
     user: state.user || null,
     scanHistory: state.scanHistory || [],
     preferences: {
-      theme: localStorage.getItem('dermai_theme') || 'dark',
+      theme: localStorage.getItem('dermai_theme') || 'light',
       skinTone: localStorage.getItem('dermai_skintone') || 'Type I',
       consent: JSON.parse(localStorage.getItem('dermai_consent') || 'null')
     },
