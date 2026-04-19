@@ -35,6 +35,7 @@ RULES:
 - Include the ISIC class in medicalName (e.g., "Melanoma [HAM10000: mel]") when applicable
 - Be medically accurate — real clinical terminology only
 - Never fabricate; if image quality is poor, say so in warning
+- For the description field, provide a VERY DETAILED, comprehensive, and patient-friendly multi-paragraph explanation of the condition. Include its pathophysiology, who it typically affects, key characteristics, and its general prognosis. Do NOT provide a short 1-sentence summary.
 
 Return ONLY valid JSON (no markdown, no extra text):
 {
@@ -44,7 +45,7 @@ Return ONLY valid JSON (no markdown, no extra text):
   "category": "string",
   "confidence": number,
   "emergencyLevel": "low"|"medium"|"high",
-  "description": "string",
+  "description": "string (highly detailed, multi-paragraph explanation)",
   "warning": "string",
   "causes": ["string","string","string"],
   "symptoms": ["string","string","string"],
