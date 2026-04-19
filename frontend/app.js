@@ -1255,3 +1255,95 @@ function showPrivacyPreview() {
 
 // Init consent banner on page load
 window.addEventListener('DOMContentLoaded', () => { setTimeout(initConsentBanner, 100); });
+
+// ── Custom Translate UI ──────────────────────────────────────
+let googleLangs = [];
+let translateReady = false;
+
+function toggleCustomTranslate() {
+  const dropdown = document.getElementById('customTranslateDropdown');
+  dropdown.classList.toggle('hidden');
+  
+  // If opening and not ready, try to load
+  if (!dropdown.classList.contains('hidden')) {
+    document.getElementById('translateSearch').focus();
+    if (!translateReady) {
+      loadGoogleLanguages();
+    }
+  }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const wrapper = document.getElementById('customTranslateWrapper');
+  if (wrapper && !wrapper.contains(e.target)) {
+    document.getElementById('customTranslateDropdown')?.classList.add('hidden');
+  }
+});
+
+function loadGoogleLanguages() {
+  const select = document.querySelector('.goog-te-combo');
+  if (!select) {
+    // If not injected yet, wait a bit
+    setTimeout(loadGoogleLanguages, 500);
+    return;
+  }
+  
+  if (select.options.length === 0) {
+    setTimeout(loadGoogleLanguages, 500);
+    return;
+  }
+  
+  googleLangs = [];
+  Array.from(select.options).forEach(opt => {
+    if (opt.value) { // Skip default empty/placeholder option
+      googleLangs.push({ code: opt.value, name: opt.text });
+    }
+  });
+  
+  if (googleLangs.length > 0) {
+    translateReady = true;
+    renderLanguages(googleLangs);
+  }
+}
+
+function renderLanguages(langs) {
+  const list = document.getElementById('translateList');
+  if (!list) return;
+  
+  if (langs.length === 0) {
+    list.innerHTML = '<div class="translate-loading">No languages found</div>';
+    return;
+  }
+  
+  // Get current active language if any
+  const select = document.querySelector('.goog-te-combo');
+  const activeCode = select ? select.value : '';
+
+  list.innerHTML = langs.map(l => `
+    <div class="translate-item ${l.code === activeCode ? 'active' : ''}" onclick="selectLanguage('${l.code}', '${l.name}')">
+      <span>${l.name}</span>
+      ${l.code === activeCode ? '<span>✓</span>' : ''}
+    </div>
+  `).join('');
+}
+
+function filterLanguages(query) {
+  if (!translateReady) return;
+  const q = query.toLowerCase();
+  const filtered = googleLangs.filter(l => l.name.toLowerCase().includes(q));
+  renderLanguages(filtered);
+}
+
+function selectLanguage(code, name) {
+  const select = document.querySelector('.goog-te-combo');
+  if (select) {
+    select.value = code;
+    select.dispatchEvent(new Event('change'));
+    showToast(`Translated to ${name}`, '🌐');
+  }
+  document.getElementById('customTranslateDropdown').classList.add('hidden');
+  
+  // Update UI active state
+  setTimeout(() => filterLanguages(document.getElementById('translateSearch').value), 100);
+}

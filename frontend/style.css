@@ -422,6 +422,19 @@ code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:monos
 .goog-te-gadget span { display:none!important; }
 .skiptranslate.goog-te-gadget { margin-top:2px; }
 
+/* CUSTOM TRANSLATE UI */
+.custom-translate-wrapper { position: relative; }
+.custom-translate-dropdown { position: absolute; top: calc(100% + 10px); right: 0; background: var(--card); border: 1px solid var(--border2); border-radius: var(--radius); width: 220px; box-shadow: var(--shadow); z-index: 1000; overflow: hidden; animation: fadeUp .2s ease; }
+.translate-search-wrap { padding: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--card2); }
+.translate-search-icon { font-size: 0.9rem; opacity: 0.7; }
+.translate-search-wrap input { width: 100%; background: transparent; border: none; outline: none; color: var(--text); font-family: var(--font); font-size: 0.85rem; }
+.translate-list { max-height: 250px; overflow-y: auto; }
+.translate-loading { padding: 16px; text-align: center; color: var(--text2); font-size: 0.8rem; }
+.translate-item { padding: 10px 14px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: var(--text); transition: background .2s; border-bottom: 1px solid rgba(255,255,255,.02); }
+.translate-item:last-child { border-bottom: none; }
+.translate-item:hover { background: rgba(212,175,55,.08); color: var(--accent); }
+.translate-item.active { background: rgba(212,175,55,.15); color: var(--accent); font-weight: 700; }
+
 /* PRIVACY PAGE */
 .privacy-hero{background:linear-gradient(135deg,rgba(212,175,55,.08) 0%,rgba(26,26,26,.9) 50%,rgba(50,215,75,.06) 100%);border:1px solid var(--border2);border-radius:var(--radius);padding:32px 36px;display:flex;align-items:center;gap:24px;margin-bottom:24px;position:relative;overflow:hidden}
 .privacy-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(212,175,55,.12) 0%,transparent 70%);pointer-events:none}

@@ -10,7 +10,7 @@
 <!-- Google Translate Widget Script -->
 <script type="text/javascript">
 function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en', layout: google.translate.TranslateElement.InlineLayout.SIMPLE}, 'google_translate_element');
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
 }
 </script>
 <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
@@ -165,7 +165,21 @@ function googleTranslateElementInit() {
     <div class="topbar">
       <div class="topbar-title" id="pageTitle">Dashboard</div>
       <div class="topbar-actions">
-        <div id="google_translate_element" style="height:40px; display:flex; align-items:center; overflow:hidden; border-radius:10px; opacity:0.9;"></div>
+        <div id="google_translate_element" style="display:none;"></div>
+        <div class="custom-translate-wrapper" id="customTranslateWrapper">
+          <button class="btn btn-ghost" id="customTranslateBtn" onclick="toggleCustomTranslate()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; gap: 6px;">
+            <span style="font-size: 1.1rem;">🌍</span> Language
+          </button>
+          <div class="custom-translate-dropdown hidden" id="customTranslateDropdown">
+            <div class="translate-search-wrap">
+              <span class="translate-search-icon">🔍</span>
+              <input type="text" class="form-input" id="translateSearch" placeholder="Search language..." oninput="filterLanguages(this.value)">
+            </div>
+            <div class="translate-list" id="translateList">
+              <div class="translate-loading">Loading languages...</div>
+            </div>
+          </div>
+        </div>
         <div class="icon-btn" onclick="toggleTheme()" title="Toggle theme">◐</div>
         <div class="icon-btn" id="notifBtn" title="Notifications">◉</div>
       </div>
