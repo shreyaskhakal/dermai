@@ -1,17 +1,17 @@
 :root {
-  --bg:#000000; --bg2:#0A0A0A; --card:#111111; --card2:#1A1A1A;
-  --text:#FFFFFF; --text2:#CCCCCC; --accent:#D4AF37; --accent2:#F0C040;
-  --accent3:#B8962E; --danger:#FF453A; --warn:#FF9F0A; --safe:#32D74B;
-  --border:rgba(255,255,255,0.08); --border2:rgba(212,175,55,0.25);
-  --shadow:0 8px 40px rgba(0,0,0,0.6); --shadow2:0 2px 12px rgba(0,0,0,0.4);
-  --glow:0 0 24px rgba(212,175,55,0.18); --radius:16px; --radius2:10px;
-  --font:'Inter',sans-serif; --font2:'Montserrat',sans-serif;
-}
-.light {
   --bg:#FFFFFF; --bg2:#F8F8F8; --card:#FFFFFF; --card2:#F2F2F2;
-  --text:#111111; --text2:#444444; --border:rgba(0,0,0,0.08);
+  --text:#111111; --text2:#444444; --accent:#D4AF37; --accent2:#F0C040;
+  --accent3:#B8962E; --danger:#FF453A; --warn:#FF9F0A; --safe:#32D74B;
+  --border:rgba(0,0,0,0.08); --border2:rgba(212,175,55,0.25);
   --shadow:0 8px 32px rgba(0,0,0,0.1); --shadow2:0 2px 8px rgba(0,0,0,0.06);
+  --glow:0 0 20px rgba(212,175,55,0.2); --radius:24px; --radius2:14px;
   --font:'Roboto',sans-serif; --font2:'Outfit',sans-serif;
+}
+.dark {
+  --bg:#000000; --bg2:#0A0A0A; --card:#111111; --card2:#1A1A1A;
+  --text:#FFFFFF; --text2:#CCCCCC; --border:rgba(255,255,255,0.08);
+  --shadow:0 8px 40px rgba(0,0,0,0.6); --shadow2:0 2px 12px rgba(0,0,0,0.4);
+  --font:'Inter',sans-serif; --font2:'Montserrat',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -504,11 +504,11 @@ code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:monos
 .consent-link{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none}
 .consent-link:hover{text-decoration:underline}
 
-/* Light theme overrides */
-.light .privacy-hero{background:linear-gradient(135deg,rgba(212,175,55,.06) 0%,rgba(245,245,245,.9) 50%,rgba(50,215,75,.04) 100%)}
-.light .consent-banner{background:rgba(255,255,255,.97)}
-.light .privacy-action-card.delete{background:rgba(255,69,58,.03)}
-.light .third-party-item{background:var(--card)}
+/* Dark theme overrides */
+.dark .privacy-hero{background:linear-gradient(135deg,rgba(212,175,55,.08) 0%,rgba(26,26,26,.9) 50%,rgba(50,215,75,.06) 100%)}
+.dark .consent-banner{background:rgba(26,26,26,.97)}
+.dark .privacy-action-card.delete{background:rgba(255,69,58,.03)}
+.dark .third-party-item{background:var(--card2)}
 
 @media(max-width:768px){
   .privacy-grid{grid-template-columns:1fr}

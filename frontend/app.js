@@ -69,10 +69,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Restore settings
   const savedTheme = localStorage.getItem('dermai_theme');
   if (savedTheme === 'dark') { 
-    document.body.classList.remove('light'); 
+    document.body.classList.add('dark'); 
     state.isDark = true; 
   } else {
-    document.body.classList.add('light'); 
+    document.body.classList.remove('dark'); 
     state.isDark = false; 
   }
   syncThemeToggle();
@@ -1119,7 +1119,7 @@ function saveProfile() {
 // ── Theme ────────────────────────────────────────────────────
 function toggleTheme() {
   state.isDark = !state.isDark;
-  document.body.classList.toggle('light', !state.isDark);
+  document.body.classList.toggle('dark', state.isDark);
   localStorage.setItem('dermai_theme', state.isDark ? 'dark' : 'light');
   syncThemeToggle();
 }
