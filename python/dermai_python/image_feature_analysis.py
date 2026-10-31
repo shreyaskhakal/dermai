@@ -212,3 +212,4 @@ if __name__ == "__main__":
 
     results = extract_all_features(img)
     print(format_feature_report(results))
+

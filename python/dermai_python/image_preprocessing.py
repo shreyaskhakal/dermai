@@ -339,3 +339,4 @@ if __name__ == "__main__":
     print(f"- Original Dimensions: {res['original_shape']}")
     print(f"- Standardized Resized: {res['processed_shape']}")
     print(f"- Artifacts saved: {list(res['saved_files'].keys())}")
+

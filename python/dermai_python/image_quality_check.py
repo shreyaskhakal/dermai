@@ -311,3 +311,4 @@ if __name__ == "__main__":
 
     results = evaluate_quality(img)
     print(format_quality_report(results))
+

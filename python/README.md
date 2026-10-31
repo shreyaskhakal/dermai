@@ -332,3 +332,4 @@ By studying and running this supplementary suite, students and researchers explo
 > - They **must NOT** be used to screen, diagnose, or manage any skin condition, lesion, melanoma, or dermatological disease.
 > - The sample dataset is **100% synthetic** and does not represent real patients or actual clinical outcomes.
 > - Always consult a board-certified dermatologist or qualified healthcare professional for medical concerns.
+
