@@ -55,6 +55,9 @@ python/
 ├── README.md                      # Comprehensive academic documentation (this file)
 ├── requirements.txt               # Standalone Python dependencies (isolated from package.json)
 ├── .gitignore                     # Ignores .venv, bytecode, and demo_output artifacts
+├── run_demo.bat                   # 1-Click Windows Command Prompt launcher
+├── run_demo.ps1                   # 1-Click Windows PowerShell launcher
+├── dermai_academic_demo.ipynb     # Interactive Jupyter Notebook demonstration
 ├── sample_data/
 │   └── sample_scans.csv           # 25 synthetic illustrative scan records (non-PHI)
 ├── dermai_python/
@@ -148,25 +151,36 @@ pip install -r requirements.txt
 
 ## 7. Execution Guide
 
-### Option 1: Run Full End-to-End Demonstration (Recommended)
+### Option 1: 1-Click Launchers (Windows)
+You can directly run the demonstration without configuring CLI arguments:
+- **Command Prompt:** Double-click `run_demo.bat` or run `.\run_demo.bat`
+- **PowerShell:** Run `.\run_demo.ps1`
+
+### Option 2: Run Full End-to-End Demonstration via Python (Recommended)
 Automatically runs dataset analytics, creates a synthetic dermoscopic patch, and performs image preprocessing, quality checks, and feature extraction:
 ```bash
 python -m dermai_python.run_demo
 ```
 
-### Option 2: Run Demonstration with Your Own Skin Image
+### Option 3: Run Demonstration with Your Own Skin Image
 ```bash
 python -m dermai_python.run_demo --image path/to/your_skin_photo.jpg
 ```
 
-### Option 3: Run Demonstration with a Custom CSV Dataset
+### Option 4: Run Demonstration with a Custom CSV Dataset
 ```bash
 python -m dermai_python.run_demo --csv sample_data/sample_scans.csv
 ```
 
-### Option 4: Custom Output Directory
+### Option 5: Custom Output Directory
 ```bash
 python -m dermai_python.run_demo --output-dir custom_demo_output
+```
+
+### Option 6: Interactive Jupyter Notebook Walkthrough
+Launch Jupyter to explore step-by-step visual markdown cells and inline plots:
+```bash
+jupyter notebook dermai_academic_demo.ipynb
 ```
 
 ---
