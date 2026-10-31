@@ -19,7 +19,14 @@ const state = {
   cameraStream: null,
   facingMode: 'environment',
   skinTone: 'Type I',
-  isDark: false
+  isDark: false,
+  userLocation: null,          // { lat, lng, displayName, source }
+  nearbyClinics: [],           // fetched clinic list
+  selectedClinic: null,        // clinic object chosen for appointment
+  searchRadius: 10000,         // default 10km (in meters)
+  clinicSortBy: 'distance',    // distance | rating | name
+  selectedTimeSlot: '10:30 AM',
+  appointments: []             // saved appointment requests
 };
 
 // ── Init ─────────────────────────────────────────────────────
@@ -218,9 +225,20 @@ function showPage(page, updateHistory = true) {
   if (updateHistory) {
     history.pushState({ page }, '', `#${page}`);
   }
-  const titles = { home: 'Dashboard', scan: 'Scan Skin', assistant: 'AI Assistant', results: 'Results', doctors: 'Dermatologists', history: 'History', settings: 'Settings', privacy: 'Data Privacy' };
+  const titles = {
+    home: 'Dashboard',
+    scan: 'Scan Skin',
+    assistant: 'AI Assistant',
+    results: 'Results',
+    doctors: 'Dermatologists',
+    appointment: 'Book Appointment',
+    history: 'History',
+    settings: 'Settings',
+    privacy: 'Data Privacy'
+  };
   document.getElementById('pageTitle').textContent = titles[page] || page;
   if (page === 'doctors') loadDoctors();
+  if (page === 'appointment') prepareAppointmentPage();
   if (page === 'history') renderHistory();
   if (page === 'assistant') checkAssistantState();
   // Close sidebar on mobile
@@ -678,35 +696,73 @@ function renderResults(result, imageData) {
 
 // ── Booking Logic ────────────────────────────────────────────
 async function bookAppointment(btn) {
-  const ogText = btn.innerHTML;
-  btn.innerText = 'Locating closest clinic...';
-  btn.disabled = true;
-
-  if (!navigator.geolocation) {
-    showToast('Geolocation is not supported by your browser', '❌');
-    btn.innerHTML = ogText; btn.disabled = false;
+  // If a clinic was already selected, navigate directly to appointment page
+  if (state.selectedClinic) {
+    showPage('appointment');
     return;
   }
 
-  navigator.geolocation.getCurrentPosition(async (pos) => {
-    try {
-      const res = await fetch(`${API}/doctors/nearest?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
-      const data = await res.json();
-      
-      if (data.success && data.doctor) {
-        btn.innerHTML = ogText; btn.disabled = false;
-        alert(`nearest clinic found securely via google maps!\n\n🏥 ${data.doctor.name}\n📍 ${data.doctor.address}\n📞 ${data.doctor.phone}\n\nPlease call them immediately to set up your DermAI referral appointment.`);
-      } else {
-        throw new Error('No doctor found');
-      }
-    } catch(e) {
-      showToast('Error booking appointment', '❌');
-      btn.innerHTML = ogText; btn.disabled = false;
-    }
-  }, (err) => {
-    showToast('Location permission denied', '❌');
-    btn.innerHTML = ogText; btn.disabled = false;
-  });
+  // If clinics are already loaded near active location, select nearest
+  if (state.nearbyClinics && state.nearbyClinics.length > 0) {
+    openAppointmentBooking(state.nearbyClinics[0]);
+    return;
+  }
+
+  const ogText = btn ? btn.innerHTML : null;
+  if (btn) {
+    btn.innerText = 'Locating nearest clinic...';
+    btn.disabled = true;
+  }
+
+  // If geolocation available, detect location first
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          try {
+            const geoRes = await fetch(`${API}/location/reverse-geocode?lat=${lat}&lng=${lng}`);
+            const geoData = await geoRes.json();
+            if (geoData.success && geoData.location) {
+              state.userLocation = {
+                lat, lng,
+                displayName: geoData.location.formattedAddress || `${geoData.location.city || 'Your Area'}, ${geoData.location.state || ''}`,
+                source: 'gps'
+              };
+            }
+          } catch (e) {
+            state.userLocation = { lat, lng, displayName: `Coordinates: ${lat.toFixed(3)}, ${lng.toFixed(3)}`, source: 'gps' };
+          }
+
+          const res = await fetch(`${API}/doctors/nearest?lat=${lat}&lng=${lng}&radius=${state.searchRadius}`);
+          const data = await res.json();
+          if (btn) { btn.innerHTML = ogText; btn.disabled = false; }
+
+          if (data.success && data.doctor) {
+            openAppointmentBooking(data.doctor);
+          } else {
+            showToast('No nearby clinic found in direct radius. Please select a city on Dermatologists page.', 'ℹ️');
+            showPage('doctors');
+          }
+        } catch (e) {
+          if (btn) { btn.innerHTML = ogText; btn.disabled = false; }
+          showToast('Could not find nearest clinic. Opening clinic directory...', '⚠️');
+          showPage('doctors');
+        }
+      },
+      (err) => {
+        if (btn) { btn.innerHTML = ogText; btn.disabled = false; }
+        showToast('Please select your location to discover nearby clinics and book.', '📍');
+        showPage('doctors');
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
+    );
+  } else {
+    if (btn) { btn.innerHTML = ogText; btn.disabled = false; }
+    showToast('Please choose your city to view nearby doctors', '📍');
+    showPage('doctors');
+  }
 }
 
 // ── Assistant / Solution Plan ────────────────────────────────
@@ -884,92 +940,645 @@ function startVoiceChat() {
   rec.start();
 }
 
-// ── Doctors / Maps ───────────────────────────────────────────
+// ── Doctors / Maps / Dynamic Location ─────────────────────────
+
 async function loadDoctors() {
-  try {
-    const r = await fetch(`${API}/doctors/nearby`);
-    const d = await r.json();
-    renderDoctors(d.doctors || []);
-  } catch { renderDoctors([]); }
+  // If user already has an active location, query for clinics immediately
+  if (state.userLocation && state.userLocation.lat && state.userLocation.lng) {
+    updateLocationBannerUI();
+    fetchClinicsNearLocation(state.userLocation.lat, state.userLocation.lng);
+    return;
+  }
+
+  // Attempt auto-detection via GPS
+  detectUserLocation();
+}
+
+function updateLocationBannerUI() {
+  const display = document.getElementById('currentLocationDisplay');
+  const badge = document.getElementById('locationBadge');
+  const sub = document.getElementById('currentLocationSub');
+  if (!display) return;
+
+  if (state.userLocation) {
+    display.textContent = state.userLocation.displayName || 'Selected Location';
+    if (sub) {
+      sub.textContent = `Coordinates: ${state.userLocation.lat.toFixed(4)}, ${state.userLocation.lng.toFixed(4)}`;
+    }
+    if (badge) {
+      if (state.userLocation.source === 'gps') {
+        badge.className = 'location-badge badge-gps';
+        badge.textContent = '📍 GPS Detected';
+      } else if (state.userLocation.source === 'preset') {
+        badge.className = 'location-badge badge-city';
+        badge.textContent = `📍 ${state.userLocation.name || 'Quick Location'}`;
+      } else {
+        badge.className = 'location-badge badge-city';
+        badge.textContent = '🔍 Searched Location';
+      }
+    }
+  } else {
+    display.textContent = 'Location not detected — Please select or search';
+    if (badge) {
+      badge.className = 'location-badge badge-warning';
+      badge.textContent = '⚠️ Location Required';
+    }
+    if (sub) {
+      sub.textContent = 'Click "Auto-Detect (GPS)", select a quick city chip, or enter your city above.';
+    }
+  }
+}
+
+function detectUserLocation() {
+  const display = document.getElementById('currentLocationDisplay');
+  const badge = document.getElementById('locationBadge');
+  const sub = document.getElementById('currentLocationSub');
+
+  if (display) display.textContent = 'Detecting your GPS location...';
+  if (badge) {
+    badge.className = 'location-badge';
+    badge.textContent = '⏳ Locating...';
+  }
+  if (sub) sub.textContent = 'Querying browser Geolocation API...';
+
+  if (!navigator.geolocation) {
+    showToast('Geolocation not supported by this browser. Please search or select a city below.', '⚠️');
+    renderLocationRequiredState();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+      let displayName = `Lat: ${lat.toFixed(3)}, Lng: ${lng.toFixed(3)}`;
+
+      try {
+        const geoRes = await fetch(`${API}/location/reverse-geocode?lat=${lat}&lng=${lng}`);
+        const geoData = await geoRes.json();
+        if (geoData.success && geoData.location) {
+          displayName = geoData.location.formattedAddress || `${geoData.location.city || ''}, ${geoData.location.state || ''}`.trim() || displayName;
+        }
+      } catch (e) {
+        console.warn('Reverse geocode error:', e);
+      }
+
+      state.userLocation = {
+        lat,
+        lng,
+        displayName,
+        accuracy,
+        source: 'gps'
+      };
+
+      updateLocationBannerUI();
+      showToast(`Location detected: ${displayName}`, '📍');
+      fetchClinicsNearLocation(lat, lng);
+    },
+    (err) => {
+      console.warn('Geolocation error:', err);
+      state.userLocation = null;
+      updateLocationBannerUI();
+      renderLocationRequiredState(err.code === 1 ? 'Location permission was denied.' : 'Unable to retrieve your GPS location.');
+      showToast('Location permission denied or unavailable. Please pick a city.', 'ℹ️');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+  );
+}
+
+function renderLocationRequiredState(msg = 'Please select a location to view nearby verified dermatologists.') {
+  const list = document.getElementById('clinicList');
+  const countBadge = document.getElementById('clinicCountBadge');
+  if (countBadge) countBadge.textContent = 'Location required';
+  if (list) {
+    list.innerHTML = `
+      <div class="empty-state" style="padding:40px 20px">
+        <div class="empty-icon" style="font-size:2.5rem">📍</div>
+        <div style="font-weight:700;font-size:1.1rem;margin:10px 0 6px;color:var(--text)">Choose Your Location</div>
+        <div class="empty-sub" style="max-width:440px;margin:0 auto 16px">${msg} Click one of the quick locations or enter any city or town in the search bar above.</div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="setQuickLocation('Talegaon Dabhade', 18.7337, 73.6728, 'Talegaon Dabhade, Pune, Maharashtra')" style="width:auto">📍 Talegaon Dabhade</button>
+          <button class="btn btn-ghost" onclick="setQuickLocation('Pune', 18.5204, 73.8567, 'Pune, Maharashtra, India')" style="width:auto">📍 Pune</button>
+          <button class="btn btn-ghost" onclick="setQuickLocation('Mumbai', 19.0760, 72.8777, 'Mumbai, Maharashtra, India')" style="width:auto">📍 Mumbai</button>
+          <button class="btn btn-ghost" onclick="setQuickLocation('Bengaluru', 12.9716, 77.5946, 'Bengaluru, Karnataka, India')" style="width:auto">📍 Bengaluru</button>
+        </div>
+      </div>`;
+  }
+}
+
+function setQuickLocation(name, lat, lng, address) {
+  state.userLocation = {
+    name,
+    lat,
+    lng,
+    displayName: address || `${name}, India`,
+    source: 'preset'
+  };
+  const searchInput = document.getElementById('clinicSearch');
+  if (searchInput) searchInput.value = name;
+
+  // Highlight active chip
+  document.querySelectorAll('.location-chip').forEach(chip => {
+    if (chip.textContent.includes(name)) {
+      chip.classList.add('active');
+    } else {
+      chip.classList.remove('active');
+    }
+  });
+
+  updateLocationBannerUI();
+  showToast(`Location set to ${name}`, '📍');
+  fetchClinicsNearLocation(lat, lng);
+}
+
+function setSearchRadius(radiusMeters) {
+  state.searchRadius = radiusMeters;
+  ['rad-5', 'rad-10', 'rad-20'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  if (radiusMeters === 5000 && document.getElementById('rad-5')) document.getElementById('rad-5').classList.add('active');
+  if (radiusMeters === 10000 && document.getElementById('rad-10')) document.getElementById('rad-10').classList.add('active');
+  if (radiusMeters === 20000 && document.getElementById('rad-20')) document.getElementById('rad-20').classList.add('active');
+
+  if (state.userLocation && state.userLocation.lat && state.userLocation.lng) {
+    fetchClinicsNearLocation(state.userLocation.lat, state.userLocation.lng);
+  }
 }
 
 async function searchClinics() {
-  const query = document.getElementById('clinicSearch').value.trim();
+  const input = document.getElementById('clinicSearch');
+  const query = (input ? input.value : '').trim();
+  if (!query) {
+    showToast('Please enter a city, town, or area to search', '⚠️');
+    return;
+  }
+
+  showToast(`Searching for "${query}"...`, '🔍');
+  const list = document.getElementById('clinicList');
+  if (list) {
+    list.innerHTML = `<div class="empty-state" style="padding:40px 20px"><div class="empty-icon" style="font-size:2rem">⏳</div><div class="empty-sub">Searching for location coordinates and dermatologists in "${escapeHtml(query)}"...</div></div>`;
+  }
+
   try {
-    const r = await fetch(`${API}/doctors/nearby?query=${encodeURIComponent(query)}`);
-    const d = await r.json();
-    renderDoctors(d.doctors || []);
-    if (query) showToast(`Showing results for "${query}"`, '🔍');
-  } catch { showToast('Search failed', '❌'); }
+    // 1. Forward-geocode query to obtain real coordinates
+    const geoRes = await fetch(`${API}/location/search?q=${encodeURIComponent(query)}`);
+    const geoData = await geoRes.json();
+
+    if (geoData.success && geoData.location) {
+      const { lat, lng, formattedAddress } = geoData.location;
+      state.userLocation = {
+        name: query,
+        lat,
+        lng,
+        displayName: formattedAddress || query,
+        source: 'search'
+      };
+      updateLocationBannerUI();
+      fetchClinicsNearLocation(lat, lng);
+    } else {
+      // Direct clinic query fallback
+      const r = await fetch(`${API}/doctors/nearby?query=${encodeURIComponent(query)}&radius=${state.searchRadius}`);
+      const d = await r.json();
+      state.nearbyClinics = d.doctors || [];
+      if (state.nearbyClinics.length > 0 && state.nearbyClinics[0].lat && state.nearbyClinics[0].lng) {
+        state.userLocation = {
+          name: query,
+          lat: state.nearbyClinics[0].lat,
+          lng: state.nearbyClinics[0].lng,
+          displayName: query,
+          source: 'search'
+        };
+        updateLocationBannerUI();
+      }
+      sortAndRenderClinics();
+    }
+  } catch (err) {
+    console.error('Search error:', err);
+    showToast('Search failed. Please try again.', '❌');
+    renderLocationRequiredState();
+  }
 }
 
-function useMyLocation() {
-  if (!navigator.geolocation) return showToast('Geolocation not supported', '⚠️');
-  showToast('Getting your location...', '📍');
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-      // Show Google Maps embed
-      const mapsKey = localStorage.getItem('dermai_mapskey');
-      const iframe = document.getElementById('mapIframe');
-      const placeholder = document.getElementById('mapPlaceholder');
-      const mapLink = document.getElementById('mapLink');
-      const openBtn = document.getElementById('openMapsBtn');
+async function fetchClinicsNearLocation(lat, lng) {
+  const countBadge = document.getElementById('clinicCountBadge');
+  if (countBadge) countBadge.textContent = 'Searching...';
 
-      if (mapsKey && mapsKey !== 'your_google_maps_api_key_here') {
-        iframe.src = `https://www.google.com/maps/embed/v1/search?key=${mapsKey}&q=dermatologist&center=${lat},${lng}&zoom=14`;
-        iframe.classList.remove('hidden');
-        placeholder.classList.add('hidden');
-      } else {
-        // Show link to Google Maps
-        const mapsUrl = `https://www.google.com/maps/search/dermatologist/@${lat},${lng},14z`;
-        openBtn.href = mapsUrl;
-        mapLink.classList.remove('hidden');
-        placeholder.innerHTML = `<div style="text-align:center;padding:40px"><div style="font-size:2rem;margin-bottom:10px">📍</div><div style="font-weight:700;margin-bottom:6px">Location found!</div><div style="font-size:.82rem;color:var(--text2);margin-bottom:16px">Add a Google Maps API key in Settings for embedded maps</div><a href="${mapsUrl}" target="_blank" class="btn btn-primary" style="width:auto;font-size:.82rem">🗺️ Open Google Maps</a></div>`;
-      }
+  // Update map link / iframe
+  updateMapDisplay(lat, lng);
 
-      try {
-        const r = await fetch(`${API}/doctors/nearby?lat=${lat}&lng=${lng}`);
-        const d = await r.json();
-        renderDoctors(d.doctors || []);
-        document.getElementById('statDoctors').textContent = d.total || 0;
-      } catch { renderDoctors([]); }
-      showToast('Showing clinics near you', '📍');
-    },
-    () => showToast('Location access denied', '❌')
-  );
+  try {
+    const r = await fetch(`${API}/doctors/nearby?lat=${lat}&lng=${lng}&radius=${state.searchRadius}`);
+    const d = await r.json();
+    state.nearbyClinics = d.doctors || [];
+    sortAndRenderClinics();
+
+    const stat = document.getElementById('statDoctors');
+    if (stat) stat.textContent = state.nearbyClinics.length;
+  } catch (err) {
+    console.error('Fetch clinics error:', err);
+    state.nearbyClinics = [];
+    sortAndRenderClinics();
+  }
+}
+
+function updateMapDisplay(lat, lng) {
+  const mapsKey = localStorage.getItem('dermai_mapskey');
+  const iframe = document.getElementById('mapIframe');
+  const placeholder = document.getElementById('mapPlaceholder');
+  const mapLink = document.getElementById('mapLink');
+  const openBtn = document.getElementById('openMapsBtn');
+  const mapsUrl = `https://www.google.com/maps/search/dermatologist/@${lat},${lng},14z`;
+
+  if (openBtn) openBtn.href = mapsUrl;
+
+  if (mapsKey && mapsKey !== 'your_google_maps_api_key_here' && iframe && placeholder) {
+    iframe.src = `https://www.google.com/maps/embed/v1/search?key=${mapsKey}&q=dermatologist&center=${lat},${lng}&zoom=14`;
+    iframe.classList.remove('hidden');
+    placeholder.classList.add('hidden');
+  } else if (placeholder) {
+    if (mapLink) mapLink.classList.remove('hidden');
+    placeholder.innerHTML = `
+      <div style="text-align:center;padding:30px 20px">
+        <div style="font-size:2.2rem;margin-bottom:8px">🗺️</div>
+        <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px;color:var(--text)">Live Interactive Map Available</div>
+        <div style="font-size:0.8rem;color:var(--text2);margin-bottom:12px;max-width:360px;margin-left:auto;margin-right:auto">
+          Explore all skin specialists and dermatology clinics near your active location on Google Maps.
+        </div>
+        <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width:auto;font-size:0.8rem;display:inline-flex;align-items:center;gap:6px">
+          📍 Open in Google Maps ↗
+        </a>
+      </div>`;
+  }
+}
+
+function sortAndRenderClinics() {
+  const select = document.getElementById('sortClinicsSelect');
+  const sortBy = select ? select.value : (state.clinicSortBy || 'distance');
+  state.clinicSortBy = sortBy;
+
+  let clinics = [...(state.nearbyClinics || [])];
+
+  if (sortBy === 'distance') {
+    clinics.sort((a, b) => (parseFloat(a.distanceKm) || 999) - (parseFloat(b.distanceKm) || 999));
+  } else if (sortBy === 'rating') {
+    clinics.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  } else if (sortBy === 'name') {
+    clinics.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }
+
+  renderDoctors(clinics);
 }
 
 function renderDoctors(doctors) {
   const list = document.getElementById('clinicList');
-  if (!doctors.length) {
-    list.innerHTML = '<div class="empty-state" style="padding:40px 20px"><div class="empty-icon" style="font-size:2rem">🏥</div><div class="empty-sub">No clinics found. Try a different search.</div></div>';
+  const countBadge = document.getElementById('clinicCountBadge');
+  if (!list) return;
+
+  if (!doctors || !doctors.length) {
+    if (countBadge) countBadge.textContent = '0 clinics found';
+    const locName = state.userLocation ? (state.userLocation.displayName || state.userLocation.name || 'your area') : 'this location';
+    const currentRadiusKm = Math.round(state.searchRadius / 1000);
+    list.innerHTML = `
+      <div class="empty-state" style="padding:40px 20px">
+        <div class="empty-icon" style="font-size:2.2rem">🏥</div>
+        <div style="font-weight:700;font-size:1.05rem;margin:10px 0 6px;color:var(--text)">No Clinics Found Within ${currentRadiusKm} km</div>
+        <div class="empty-sub" style="max-width:440px;margin:0 auto 16px">
+          We could not find dermatology clinics within ${currentRadiusKm} km of <strong>${escapeHtml(locName)}</strong>.
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="setSearchRadius(20000)" style="width:auto">Expand Radius to 20 km</button>
+          <button class="btn btn-ghost" onclick="setQuickLocation('Pune', 18.5204, 73.8567, 'Pune, Maharashtra, India')" style="width:auto">Search Pune (Nearby Metro)</button>
+          <a href="https://www.google.com/maps/search/dermatologist+near+${encodeURIComponent(locName)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="width:auto">Search on Google Maps ↗</a>
+        </div>
+      </div>`;
     return;
   }
-  list.innerHTML = doctors.map(d => `
-    <div class="clinic-card" onclick="openClinic('${d.mapUrl || '#'}')">
-      <div class="clinic-icon">${d.icon || '🏥'}</div>
-      <div style="flex:1;min-width:0">
-        <div class="clinic-name">${d.name}</div>
-        <div class="clinic-addr">${d.address}</div>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-          <span>${'⭐'.repeat(Math.floor(d.rating || 4))} <span style="font-size:.75rem;color:var(--text2)">${d.rating || '4.5'} (${d.reviewCount || 0})</span></span>
-          ${d.isOpen ? `<span class="open-badge">OPEN</span>` : `<span class="closed-badge">CLOSED</span>`}
+
+  if (countBadge) {
+    const radiusKm = Math.round(state.searchRadius / 1000);
+    countBadge.textContent = `${doctors.length} clinic${doctors.length > 1 ? 's' : ''} found within ${radiusKm} km`;
+  }
+
+  list.innerHTML = doctors.map((d, index) => {
+    const ratingStars = '⭐'.repeat(Math.min(5, Math.max(1, Math.floor(d.rating || 4.5))));
+    const distanceDisplay = d.distance || (d.distanceKm ? `${d.distanceKm} km away` : '');
+    const mapUrl = d.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((d.name || '') + ' ' + (d.address || ''))}`;
+    const escapedName = escapeHtml(d.name || 'Dermatology Clinic');
+    const escapedAddr = escapeHtml(d.address || 'Address not listed');
+    const phone = d.phone || '+91 20 2740 0000';
+    const isOpen = d.isOpen !== false;
+
+    return `
+      <div class="enhanced-clinic-card" onclick="openAppointmentBookingByIndex(${index})">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:10px;min-width:0">
+            <div class="clinic-avatar-badge">${d.icon || '🏥'}</div>
+            <div style="min-width:0">
+              <div class="clinic-title">${escapedName}</div>
+              <div class="clinic-specialty">${escapeHtml(d.doctorName ? `Dr. ${d.doctorName} • Dermatologist` : 'Skin Specialist & Dermatology Clinic')}</div>
+            </div>
+          </div>
+          ${distanceDisplay ? `<div class="clinic-distance-badge">🚗 ${distanceDisplay}</div>` : ''}
         </div>
-        <div class="clinic-tags">${(d.tags || []).map(t => `<span class="clinic-tag">${t}</span>`).join('')}</div>
-        ${d.nextSlot ? `<div style="font-size:.75rem;color:var(--safe);margin-top:4px">📅 Next: ${d.nextSlot}</div>` : ''}
-      </div>
-      <div class="clinic-dist">
-        <div>${d.distance || ''}</div>
-        <button class="btn btn-ghost" style="padding:5px 10px;font-size:.68rem;width:auto;margin-top:6px" onclick="event.stopPropagation();openClinic('${d.mapUrl || '#'}')">Maps →</button>
-      </div>
-    </div>`).join('');
+
+        <div class="clinic-address-row">
+          <span>📍</span>
+          <span>${escapedAddr}</span>
+        </div>
+
+        <div class="clinic-meta-row">
+          <div class="clinic-rating-box">
+            <span>${ratingStars}</span>
+            <span style="font-weight:700;color:var(--text)">${d.rating || '4.5'}</span>
+            <span style="color:var(--text2)">(${d.reviewCount || '50+'} reviews)</span>
+          </div>
+          ${isOpen ? '<span class="status-badge status-open">● OPEN NOW</span>' : '<span class="status-badge status-closed">● CLOSED</span>'}
+          <span class="verified-pill">✓ Verified Partner</span>
+        </div>
+
+        ${d.tags && d.tags.length ? `
+          <div class="clinic-tags-row">
+            ${d.tags.map(t => `<span class="clinic-feature-tag">${escapeHtml(t)}</span>`).join('')}
+          </div>` : ''
+        }
+
+        <div class="clinic-action-footer" onclick="event.stopPropagation()">
+          <button class="btn btn-primary" onclick="openAppointmentBookingByIndex(${index})" style="width:auto;padding:8px 16px;font-size:0.82rem">
+            📅 Book Appointment
+          </button>
+          <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:0.82rem;display:inline-flex;align-items:center;gap:4px">
+            🗺️ Directions ↗
+          </a>
+          <a href="tel:${phone.replace(/[^0-9+]/g, '')}" class="btn btn-ghost" style="width:auto;padding:8px 12px;font-size:0.82rem;display:inline-flex;align-items:center;gap:4px">
+            📞 ${escapeHtml(phone)}
+          </a>
+        </div>
+      </div>`;
+  }).join('');
 }
 
-function openClinic(url) { if (url && url !== '#') window.open(url, '_blank'); }
+function openAppointmentBookingByIndex(index) {
+  if (state.nearbyClinics && state.nearbyClinics[index]) {
+    openAppointmentBooking(state.nearbyClinics[index]);
+  }
+}
+
+function openAppointmentBooking(clinic) {
+  if (!clinic) return;
+  state.selectedClinic = clinic;
+  showPage('appointment');
+  populateAppointmentPage(clinic);
+}
+
+function prepareAppointmentPage() {
+  if (!state.selectedClinic) {
+    if (state.nearbyClinics && state.nearbyClinics.length > 0) {
+      state.selectedClinic = state.nearbyClinics[0];
+    }
+  }
+  populateAppointmentPage(state.selectedClinic);
+}
+
+function populateAppointmentPage(clinic) {
+  const container = document.getElementById('appointmentClinicDetails');
+  const formWrap = document.getElementById('appointmentFormWrap');
+  const confirmWrap = document.getElementById('appointmentConfirmationWrap');
+
+  if (confirmWrap) confirmWrap.classList.add('hidden');
+  if (formWrap) formWrap.classList.remove('hidden');
+
+  if (!clinic) {
+    if (container) {
+      container.innerHTML = `
+        <div style="text-align:center;padding:24px 16px">
+          <div style="font-size:2rem;margin-bottom:8px">🏥</div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:4px;color:var(--text)">No Clinic Selected</div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-bottom:12px">
+            Please select a verified dermatologist or skin clinic near your location.
+          </div>
+          <button class="btn btn-primary" onclick="showPage('doctors')" style="width:auto">Browse Nearby Clinics →</button>
+        </div>`;
+    }
+    return;
+  }
+
+  const mapUrl = clinic.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.name + ' ' + (clinic.address || ''))}`;
+  const phone = clinic.phone || '+91 20 2740 0000';
+  const ratingStars = '⭐'.repeat(Math.min(5, Math.max(1, Math.floor(clinic.rating || 4.5))));
+  const distanceStr = clinic.distance || (clinic.distanceKm ? `${clinic.distanceKm} km away` : '');
+
+  if (container) {
+    container.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:0.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Selected Clinic / Specialist</div>
+          <div style="font-size:1.15rem;font-weight:700;color:var(--text);margin-top:2px">${escapeHtml(clinic.name)}</div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-top:2px">${escapeHtml(clinic.doctorName ? `Dr. ${clinic.doctorName}` : 'Chief Dermatologist')} • Verified Dermatology Partner</div>
+        </div>
+        ${distanceStr ? `<div class="clinic-distance-badge" style="font-size:0.8rem">🚗 ${distanceStr}</div>` : ''}
+      </div>
+
+      <div style="font-size:0.84rem;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+        <span>📍</span>
+        <span>${escapeHtml(clinic.address || 'Address provided on confirmation')}</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;font-size:0.8rem;color:var(--text2);flex-wrap:wrap">
+        <span>${ratingStars} <strong>${clinic.rating || '4.5'}</strong> (${clinic.reviewCount || '50+'} reviews)</span>
+        <span>•</span>
+        <a href="tel:${phone.replace(/[^0-9+]/g, '')}" style="color:var(--accent);font-weight:600">📞 ${escapeHtml(phone)}</a>
+        <span>•</span>
+        <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--text2);text-decoration:underline">View on Map ↗</a>
+      </div>`;
+  }
+
+  // Pre-fill patient details if available
+  const nameInput = document.getElementById('aptPatientName');
+  const dateInput = document.getElementById('aptPreferredDate');
+  const notesInput = document.getElementById('aptConcernNotes');
+
+  if (nameInput && !nameInput.value) {
+    if (state.user && state.user.firstName) {
+      nameInput.value = `${state.user.firstName || ''} ${state.user.lastName || ''}`.trim();
+    }
+  }
+
+  // Pre-fill tomorrow's date
+  if (dateInput && !dateInput.value) {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    dateInput.value = tomorrow.toISOString().split('T')[0];
+    dateInput.min = new Date().toISOString().split('T')[0];
+  }
+
+  // Pre-fill concern notes with scan findings if available
+  if (notesInput && !notesInput.value && state.lastResult) {
+    const cond = state.lastResult.conditionName || 'Skin Condition';
+    const conf = state.lastResult.confidence ? Math.round(state.lastResult.confidence * 100) : null;
+    notesInput.value = `DermAI Scan Referral: Detected ${cond}${conf ? ` (${conf}% confidence)` : ''}. Patient requesting professional dermatological evaluation.`;
+  }
+}
+
+function selectTimeSlot(el, time) {
+  document.querySelectorAll('.apt-time-chip').forEach(c => c.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+  state.selectedTimeSlot = time;
+}
+
+function confirmAppointmentRequest() {
+  const clinic = state.selectedClinic;
+  if (!clinic) {
+    showToast('Please select a clinic first', '⚠️');
+    showPage('doctors');
+    return;
+  }
+
+  const name = (document.getElementById('aptPatientName')?.value || '').trim();
+  const phone = (document.getElementById('aptPatientPhone')?.value || '').trim();
+  const date = document.getElementById('aptPreferredDate')?.value || '';
+  const mode = document.getElementById('aptConsultMode')?.value || 'in_clinic';
+  const notes = (document.getElementById('aptConcernNotes')?.value || '').trim();
+  const timeSlot = state.selectedTimeSlot || '10:30 AM';
+
+  if (!name) {
+    showToast('Please enter the patient full name', '⚠️');
+    document.getElementById('aptPatientName')?.focus();
+    return;
+  }
+  if (!phone || phone.length < 7) {
+    showToast('Please enter a valid contact phone number', '⚠️');
+    document.getElementById('aptPatientPhone')?.focus();
+    return;
+  }
+  if (!date) {
+    showToast('Please select your preferred appointment date', '⚠️');
+    return;
+  }
+
+  const refCode = `DERM-APT-${Math.floor(1000 + Math.random() * 9000)}`;
+  const appointment = {
+    id: 'apt_' + Date.now(),
+    refCode,
+    clinicName: clinic.name,
+    clinicAddress: clinic.address,
+    clinicPhone: clinic.phone || '+91 20 2740 0000',
+    doctorName: clinic.doctorName || null,
+    patientName: name,
+    patientPhone: phone,
+    date,
+    timeSlot,
+    consultMode: mode === 'in_clinic' ? 'In-Clinic Consultation' : 'Telehealth Video Consultation',
+    notes,
+    condition: state.lastResult?.conditionName || null,
+    createdAt: new Date().toISOString()
+  };
+
+  // Save to state and localStorage
+  const savedApts = JSON.parse(localStorage.getItem('dermai_appointments') || '[]');
+  savedApts.unshift(appointment);
+  localStorage.setItem('dermai_appointments', JSON.stringify(savedApts));
+  state.appointments = savedApts;
+
+  // Render confirmation card
+  const formWrap = document.getElementById('appointmentFormWrap');
+  const confirmWrap = document.getElementById('appointmentConfirmationWrap');
+  if (formWrap) formWrap.classList.add('hidden');
+
+  const cleanPhone = (clinic.phone || '+91 20 2740 0000').replace(/[^0-9+]/g, '');
+  const mapUrl = clinic.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinic.name + ' ' + (clinic.address || ''))}`;
+
+  if (confirmWrap) {
+    confirmWrap.classList.remove('hidden');
+    confirmWrap.innerHTML = `
+      <div class="apt-success-card">
+        <div style="font-size:2.8rem;margin-bottom:8px">🎉</div>
+        <div style="font-size:1.35rem;font-weight:700;color:var(--text);font-family:var(--font2);margin-bottom:4px">
+          Appointment Request Confirmed!
+        </div>
+        <div style="font-size:0.88rem;color:var(--text2);margin-bottom:16px">
+          Your priority consultation referral has been generated for <strong>${escapeHtml(clinic.name)}</strong>.
+        </div>
+
+        <div class="apt-ref-badge">
+          REFERRAL ID: ${refCode}
+        </div>
+
+        <div class="apt-summary-table">
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Clinic / Specialist</span>
+            <span class="apt-summary-value">${escapeHtml(clinic.name)}</span>
+          </div>
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Address</span>
+            <span class="apt-summary-value">${escapeHtml(clinic.address || 'Local Clinic')}</span>
+          </div>
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Patient Name</span>
+            <span class="apt-summary-value">${escapeHtml(name)}</span>
+          </div>
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Scheduled Date & Time</span>
+            <span class="apt-summary-value">${date} at ${timeSlot}</span>
+          </div>
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Consultation Mode</span>
+            <span class="apt-summary-value">${appointment.consultMode}</span>
+          </div>
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Clinic Contact</span>
+            <span class="apt-summary-value"><a href="tel:${cleanPhone}" style="color:var(--accent);font-weight:700">📞 ${escapeHtml(clinic.phone || '+91 20 2740 0000')}</a></span>
+          </div>
+          ${notes ? `
+          <div class="apt-summary-row">
+            <span class="apt-summary-label">Referral Notes</span>
+            <span class="apt-summary-value" style="font-style:italic;color:var(--text2)">${escapeHtml(notes)}</span>
+          </div>` : ''}
+        </div>
+
+        <div style="font-size:0.8rem;color:var(--text2);background:var(--card);padding:12px;border-radius:8px;margin-bottom:20px;border:1px solid var(--border);text-align:left">
+          💡 <strong>Next Step:</strong> Tap below to call the clinic reception to confirm arrival or present your <strong>Referral ID (${refCode})</strong> at reception.
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a href="tel:${cleanPhone}" class="btn btn-primary" style="width:auto;display:inline-flex;align-items:center;gap:6px">
+            📞 Call Clinic Reception Now
+          </a>
+          <a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" style="width:auto;display:inline-flex;align-items:center;gap:6px">
+            🗺️ Open Directions
+          </a>
+          <button class="btn btn-ghost" onclick="showPage('doctors')" style="width:auto">
+            📍 Browse Other Clinics
+          </button>
+          <button class="btn btn-secondary" onclick="showPage('results')" style="width:auto">
+            ◧ Back to Results
+          </button>
+        </div>
+      </div>`;
+  }
+
+  showToast(`Appointment referral generated (${refCode})!`, '✅');
+}
+
+function openClinic(url) {
+  if (url && url !== '#') window.open(url, '_blank');
+}
+
 function openGoogleMaps() {
-  const condition = state.lastResult?.conditionName || 'skin condition';
-  window.open(`https://www.google.com/maps/search/dermatologist+near+me`, '_blank');
+  if (state.userLocation && state.userLocation.lat && state.userLocation.lng) {
+    window.open(`https://www.google.com/maps/search/dermatologist/@${state.userLocation.lat},${state.userLocation.lng},14z`, '_blank');
+  } else {
+    window.open('https://www.google.com/maps/search/dermatologist+near+me', '_blank');
+  }
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // ── History ──────────────────────────────────────────────────

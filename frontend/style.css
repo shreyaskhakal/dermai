@@ -518,3 +518,38 @@ code{background:var(--card2);padding:2px 6px;border-radius:4px;font-family:monos
   .consent-banner-actions{justify-content:center}
   .privacy-action-card{flex-direction:column;text-align:center;gap:12px}
 }
+
+/* -- Location & Clinic Discovery Styles ----------------------- */
+.location-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2);padding:14px 18px;margin-bottom:16px;flex-wrap:wrap}
+.location-badge{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(212,175,55,.12);color:var(--accent);border:1px solid rgba(212,175,55,.25)}
+.location-badge.gps{background:rgba(50,215,75,.12);color:var(--safe);border-color:rgba(50,215,75,.25)}
+.chips-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip-label{font-size:.75rem;color:var(--text2);font-weight:600}
+.location-chip{padding:5px 12px;border-radius:20px;font-size:.78rem;background:var(--card2);border:1px solid var(--border);cursor:pointer;transition:all .2s;color:var(--text)}
+.location-chip:hover{border-color:var(--accent);background:rgba(212,175,55,.08);color:var(--accent)}
+.location-chip.active{border-color:var(--accent);background:var(--accent);color:#000;font-weight:700}
+.filter-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:16px 0;flex-wrap:wrap}
+.filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.radius-chip{padding:4px 10px;border-radius:8px;font-size:.75rem;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-weight:600}
+.radius-chip.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+.clinic-card-enhanced{display:flex;flex-direction:row;align-items:flex-start;gap:16px;background:var(--card);border-radius:var(--radius2);padding:18px;border:1px solid var(--border);transition:all .25s;margin-bottom:12px}
+.clinic-card-enhanced:hover{border-color:var(--border2);box-shadow:var(--glow)}
+.clinic-card-main{flex:1;min-width:0}
+.clinic-meta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0}
+.clinic-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0}
+@media(max-width:600px){
+  .clinic-card-enhanced{flex-direction:column}
+  .clinic-actions{width:100%;flex-direction:row;justify-content:flex-start;margin-top:10px}
+}
+
+/* -- Appointment Booking Page Styles -------------------------- */
+.apt-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:var(--shadow)}
+.apt-clinic-box{background:var(--card2);border:1px solid var(--border);border-radius:var(--radius2);padding:18px;margin-bottom:20px}
+.apt-clinic-name{font-family:var(--font2);font-size:1.15rem;font-weight:800;color:var(--text);margin-bottom:4px}
+.apt-clinic-addr{font-size:.85rem;color:var(--text2);margin-bottom:8px}
+.apt-time-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
+.apt-time-chip{padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card2);text-align:center;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s}
+.apt-time-chip:hover{border-color:var(--accent);color:var(--accent)}
+.apt-time-chip.selected{background:linear-gradient(135deg,var(--accent3),var(--accent));color:#000;font-weight:800;border-color:var(--accent)}
+.apt-confirm-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(50,215,75,.12);border:1px solid rgba(50,215,75,.3);color:var(--safe);border-radius:20px;font-weight:700;font-size:.8rem}

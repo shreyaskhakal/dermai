@@ -146,6 +146,7 @@ function googleTranslateElementInit() {
       <div class="nav-label" style="margin-top:8px">Analysis</div>
       <a class="nav-item" onclick="showPage('results')" id="nav-results"><span class="nav-icon">◧</span> Results</a>
       <a class="nav-item" onclick="showPage('doctors')" id="nav-doctors"><span class="nav-icon">◫</span> Dermatologists</a>
+      <a class="nav-item" onclick="showPage('appointment')" id="nav-appointment"><span class="nav-icon">📅</span> Appointments</a>
       <a class="nav-item" onclick="showPage('history')" id="nav-history"><span class="nav-icon">◩</span> History</a>
       <div class="nav-label" style="margin-top:8px">Account</div>
       <a class="nav-item" onclick="showPage('settings')" id="nav-settings"><span class="nav-icon">◌</span> Settings</a>
@@ -405,34 +406,152 @@ function googleTranslateElementInit() {
     <!-- DOCTORS -->
     <div class="page" id="page-doctors">
       <div class="card mb-20">
-        <div class="section-title"><span>📍</span> Find Dermatologists Near You</div>
-        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:16px">Find verified dermatologists in your area</p>
+        <div class="section-title"><span>📍</span> Find Dermatologists & Skin Clinics Near You</div>
+        <p style="color:var(--text2);font-size:0.9rem;margin-bottom:14px">Discover verified skin specialists, dermatology clinics, and hospitals in your relevant locality</p>
+
+        <!-- Current Location Indicator Banner -->
+        <div class="location-banner" id="locationBanner">
+          <div>
+            <div style="font-size:0.75rem;color:var(--text2);text-transform:uppercase;font-weight:700;letter-spacing:0.5px">Active Search Location</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap">
+              <span style="font-weight:700;font-size:0.95rem;color:var(--text)" id="currentLocationDisplay">Detecting your location...</span>
+              <span class="location-badge" id="locationBadge">📍 Auto-Detecting</span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text2);margin-top:2px" id="currentLocationSub">Coordinates: Pending</div>
+          </div>
+          <button class="btn btn-ghost" onclick="detectUserLocation()" style="width:auto;padding:7px 14px;font-size:0.8rem">📍 Auto-Detect (GPS)</button>
+        </div>
+
+        <!-- Search Input Bar -->
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <input class="form-input" style="flex:1;min-width:200px" placeholder="🔍 Search by city or condition..." id="clinicSearch" onkeydown="if(event.key==='Enter')searchClinics()">
+          <input class="form-input" style="flex:1;min-width:220px" placeholder="🔍 Search by city, town, or area (e.g., Talegaon Dabhade, Pune)..." id="clinicSearch" onkeydown="if(event.key==='Enter')searchClinics()">
           <button class="btn btn-primary" onclick="searchClinics()">Search →</button>
-          <button class="btn btn-ghost" onclick="useMyLocation()">📍 My Location</button>
+        </div>
+
+        <!-- Quick Location Chips -->
+        <div class="chips-row">
+          <span class="chip-label">Quick Search:</span>
+          <button class="location-chip" onclick="setQuickLocation('Talegaon Dabhade', 18.7337, 73.6728, 'Talegaon Dabhade, Pune, Maharashtra')">📍 Talegaon Dabhade</button>
+          <button class="location-chip" onclick="setQuickLocation('Pune', 18.5204, 73.8567, 'Pune, Maharashtra, India')">📍 Pune</button>
+          <button class="location-chip" onclick="setQuickLocation('Mumbai', 19.0760, 72.8777, 'Mumbai, Maharashtra, India')">📍 Mumbai</button>
+          <button class="location-chip" onclick="setQuickLocation('Bengaluru', 12.9716, 77.5946, 'Bengaluru, Karnataka, India')">📍 Bengaluru</button>
+        </div>
+
+        <!-- Search Radius & Sort Controls -->
+        <div class="filter-controls">
+          <div class="filter-group">
+            <span class="chip-label">Search Radius:</span>
+            <button class="radius-chip" id="rad-5" onclick="setSearchRadius(5000)">5 km</button>
+            <button class="radius-chip active" id="rad-10" onclick="setSearchRadius(10000)">10 km (Default)</button>
+            <button class="radius-chip" id="rad-20" onclick="setSearchRadius(20000)">20 km</button>
+          </div>
+          <div class="filter-group">
+            <span class="chip-label">Sort By:</span>
+            <select class="form-input" id="sortClinicsSelect" onchange="sortAndRenderClinics()" style="padding:4px 10px;font-size:0.78rem;width:auto">
+              <option value="distance">📍 Nearest Distance</option>
+              <option value="rating">⭐ Highest Rated</option>
+              <option value="reviews">💬 Most Reviews</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <!-- Google Map Embed -->
+      <!-- Google Map Embed & Direct Link -->
       <div id="mapContainer" class="map-container mb-20">
         <div id="mapPlaceholder" class="map-placeholder">
           <div class="map-pin">📍</div>
-          <div style="font-weight:700;margin-bottom:6px">Interactive Map</div>
-          <div style="font-size:0.82rem;color:var(--text2);margin-bottom:16px">Click "My Location" to show nearby clinics on Google Maps</div>
-          <button class="btn btn-primary" onclick="useMyLocation()" style="width:auto;font-size:0.82rem">📍 Enable Location</button>
+          <div style="font-weight:700;margin-bottom:6px" id="mapPlaceholderTitle">Interactive Map View</div>
+          <div style="font-size:0.82rem;color:var(--text2);margin-bottom:16px" id="mapPlaceholderSub">Live map view of verified dermatologists in your area</div>
+          <a id="openMapsBtn" href="https://www.google.com/maps/search/dermatologist" target="_blank" class="btn btn-primary" style="width:auto;font-size:0.82rem">🗺️ Open Area in Google Maps</a>
         </div>
         <iframe id="mapIframe" class="hidden" width="100%" height="280" style="border:0;border-radius:12px" allowfullscreen loading="lazy"></iframe>
-        <div id="mapLink" class="hidden" style="margin-top:10px;text-align:center">
-          <a id="openMapsBtn" href="#" target="_blank" class="btn btn-ghost" style="width:auto;font-size:0.82rem">🗺️ Open in Google Maps</a>
-        </div>
       </div>
 
-      <div class="section-title"><span>🏥</span> Nearby Clinics</div>
+      <!-- Nearby Clinics List -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="section-title" style="margin-bottom:0"><span>🏥</span> Nearby Verified Clinics</div>
+        <div id="clinicCountBadge" style="font-size:0.8rem;color:var(--text2)">Loading clinics...</div>
+      </div>
       <div class="clinic-list" id="clinicList">
         <div class="empty-state" style="padding:40px 20px">
           <div class="empty-icon" style="font-size:2rem">🏥</div>
-          <div class="empty-sub">Click "My Location" or search to find clinics</div>
+          <div class="empty-sub">Detecting your location to display nearest dermatologists...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENT BOOKING PAGE -->
+    <div class="page" id="page-appointment">
+      <div class="card mb-20">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+          <div class="section-title" style="margin-bottom:0"><span>📅</span> Book Clinic Appointment</div>
+          <button class="btn btn-ghost" onclick="showPage('doctors')" style="width:auto;padding:6px 14px;font-size:0.8rem">← Back to Clinics</button>
+        </div>
+        <p style="color:var(--text2);font-size:0.88rem;margin-bottom:16px">Connect with your chosen dermatologist or clinic to schedule a consultation</p>
+
+        <!-- Selected Clinic Header Card -->
+        <div id="appointmentClinicDetails" class="apt-clinic-box">
+          <!-- Dynamically populated by populateAppointmentPage() -->
+        </div>
+
+        <!-- Appointment Form -->
+        <div id="appointmentFormWrap">
+          <div style="font-weight:700;font-size:0.9rem;margin-bottom:12px;font-family:var(--font2)">Patient & Appointment Details</div>
+          
+          <div class="grid-2 mb-16">
+            <div>
+              <label class="form-label">Patient Full Name</label>
+              <input type="text" class="form-input" id="aptPatientName" placeholder="Enter patient name">
+            </div>
+            <div>
+              <label class="form-label">Contact Phone Number</label>
+              <input type="tel" class="form-input" id="aptPatientPhone" placeholder="Enter contact phone">
+            </div>
+          </div>
+
+          <div class="grid-2 mb-16">
+            <div>
+              <label class="form-label">Preferred Date</label>
+              <input type="date" class="form-input" id="aptPreferredDate">
+            </div>
+            <div>
+              <label class="form-label">Consultation Mode</label>
+              <select class="form-input" id="aptConsultMode">
+                <option value="in_clinic">🏥 In-Clinic Consultation (Recommended)</option>
+                <option value="telehealth">📹 Video / Online Teleconsultation</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-16">
+            <label class="form-label">Preferred Time Slot</label>
+            <div class="apt-time-grid" id="aptTimeSlots">
+              <div class="apt-time-chip selected" onclick="selectTimeSlot(this, '10:30 AM')">10:30 AM</div>
+              <div class="apt-time-chip" onclick="selectTimeSlot(this, '12:00 PM')">12:00 PM</div>
+              <div class="apt-time-chip" onclick="selectTimeSlot(this, '03:00 PM')">03:00 PM</div>
+              <div class="apt-time-chip" onclick="selectTimeSlot(this, '05:30 PM')">05:30 PM</div>
+              <div class="apt-time-chip" onclick="selectTimeSlot(this, '07:00 PM')">07:00 PM</div>
+            </div>
+          </div>
+
+          <div class="mb-16">
+            <label class="form-label">Skin Concern / Scan Referral Notes</label>
+            <textarea class="form-input" id="aptConcernNotes" rows="3" placeholder="Describe symptoms or attach DermAI analysis findings..."></textarea>
+          </div>
+
+          <div style="font-size:0.78rem;color:var(--text2);margin-bottom:16px;background:var(--card2);padding:10px 14px;border-radius:8px;border:1px solid var(--border)">
+            ℹ️ <strong>Clinic Referral Notice:</strong> DermAI generates an official consultation referral and directly dials the clinic's appointment line.
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="confirmAppointmentRequest()" style="width:auto">📅 Confirm & Generate Appointment Referral</button>
+            <button class="btn btn-ghost" onclick="showPage('doctors')" style="width:auto">Choose Another Clinic</button>
+          </div>
+        </div>
+
+        <!-- Confirmation Card (Hidden initially) -->
+        <div id="appointmentConfirmationWrap" class="hidden">
+          <!-- Dynamically populated on submission -->
         </div>
       </div>
     </div>

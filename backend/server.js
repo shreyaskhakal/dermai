@@ -29,6 +29,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/analyze', require('./routes/analyze'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/doctors', require('./routes/doctors'));
+app.use('/api/clinics', require('./routes/doctors'));
+app.use('/api/location', require('./routes/location'));
 app.use('/api/history', require('./routes/history'));
 app.use('/api/privacy', require('./routes/privacy'));
 
