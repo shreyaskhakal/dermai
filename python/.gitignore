@@ -35,6 +35,10 @@ demo_output/
 *.jpg
 *.jpeg
 
+# Retain illustrative educational sample data and sample images
+!sample_data/
+!sample_data/**
+
 # Unit test & coverage reports
 .pytest_cache/
 .coverage

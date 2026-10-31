@@ -16,3 +16,4 @@ IF EXIST ".venv\Scripts\python.exe" (
 %PYTHON_EXE% -m dermai_python.run_demo %*
 
 pause
+

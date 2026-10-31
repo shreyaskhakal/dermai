@@ -13,3 +13,4 @@ if (Test-Path "$ScriptDir\.venv\Scripts\python.exe") {
 
 Write-Host "Starting DermaAI Academic Demonstration..." -ForegroundColor Cyan
 & $PythonExe -m dermai_python.run_demo $args
+

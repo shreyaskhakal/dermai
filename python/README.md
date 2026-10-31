@@ -57,9 +57,16 @@ python/
 ├── .gitignore                     # Ignores .venv, bytecode, and demo_output artifacts
 ├── run_demo.bat                   # 1-Click Windows Command Prompt launcher
 ├── run_demo.ps1                   # 1-Click Windows PowerShell launcher
+├── run_demo.sh                    # 1-Click macOS / Linux Bash launcher
 ├── dermai_academic_demo.ipynb     # Interactive Jupyter Notebook demonstration
 ├── sample_data/
-│   └── sample_scans.csv           # 25 synthetic illustrative scan records (non-PHI)
+│   ├── sample_scans.csv           # 25 synthetic illustrative scan records (non-PHI)
+│   └── sample_images/             # 5 illustrative test skin images:
+│       ├── normal_skin_patch.png        # Uniform normal skin tone simulation
+│       ├── pigmented_mole_patch.png     # Sharp pigmented melanocytic nevus patch
+│       ├── erythema_rash_patch.png      # Diffuse red inflammatory erythema patch
+│       ├── blurry_capture_sample.png    # Motion/optical blur sample (tests quality gate)
+│       └── glare_overexposed_sample.png # Flash specular highlight sample (tests exposure gate)
 ├── dermai_python/
 │   ├── __init__.py                # Package initialization with PEP 562 lazy loading
 │   ├── image_preprocessing.py     # OpenCV pipeline: load, validate, resize (224x224), blur, save
@@ -68,7 +75,7 @@ python/
 │   ├── scan_data_analysis.py      # Pandas & Matplotlib EDA, bar/pie charts, CSV export
 │   └── run_demo.py                # Central CLI runner coordinating all modules
 └── tests/
-    └── test_modules.py            # Automated unit test suite (27 unit tests)
+    └── test_modules.py            # Automated unit test suite (31 unit tests)
 ```
 
 ---
@@ -216,7 +223,7 @@ python -m unittest discover -s tests -p "test_*.py"
 Expected output:
 ```text
 ----------------------------------------------------------------------
-Ran 27 tests in 4.775s
+Ran 31 tests in 11.145s
 
 OK
 ```

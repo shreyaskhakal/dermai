@@ -265,6 +265,46 @@ class TestRunDemoIntegration(unittest.TestCase):
             self.assertEqual(ret, 0)
 
 
+class TestSampleImagesEvaluation(unittest.TestCase):
+    """Test suite validating heuristics against pre-generated illustrative test images."""
+
+    def setUp(self) -> None:
+        self.img_dir = Path(__file__).resolve().parent.parent / "sample_data" / "sample_images"
+
+    def test_sample_images_exist(self) -> None:
+        expected = [
+            "normal_skin_patch.png",
+            "pigmented_mole_patch.png",
+            "erythema_rash_patch.png",
+            "blurry_capture_sample.png",
+            "glare_overexposed_sample.png",
+        ]
+        for name in expected:
+            self.assertTrue((self.img_dir / name).is_file(), f"Missing sample image: {name}")
+
+    def test_blurry_sample_detected(self) -> None:
+        blurry_path = self.img_dir / "blurry_capture_sample.png"
+        img = load_image(blurry_path)
+        eval_res = evaluate_quality(img, blur_threshold=100.0)
+        self.assertTrue(eval_res["is_blurry"])
+        self.assertFalse(eval_res["overall_quality_passed"])
+
+    def test_glare_overexposed_sample_detected(self) -> None:
+        glare_path = self.img_dir / "glare_overexposed_sample.png"
+        img = load_image(glare_path)
+        eval_res = evaluate_quality(img)
+        self.assertTrue(eval_res["exposure_check"]["is_overexposed"])
+        self.assertFalse(eval_res["overall_quality_passed"])
+
+    def test_pigmented_mole_sample_features(self) -> None:
+        mole_path = self.img_dir / "pigmented_mole_patch.png"
+        img = load_image(mole_path)
+        feats = extract_all_features(img)
+        self.assertEqual(feats["dimensions"]["width"], 300)
+        self.assertEqual(feats["dimensions"]["height"], 300)
+        self.assertGreater(feats["contrast_and_intensity"]["contrast_range"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()
 
