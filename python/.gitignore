@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# C extension build files
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Demonstration outputs & generated visual plots
+demo_output/
+*.png
+*.jpg
+*.jpeg
+
+# Unit test & coverage reports
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

@@ -1,0 +1,27 @@
+scan_id,age_group,input_type,reported_concern,analysis_status,confidence_score
+SCAN-2024-001,18-25,photo_upload,Acne Vulgaris,completed,0.92
+SCAN-2024-002,26-35,camera_capture,Contact Dermatitis,completed,0.85
+SCAN-2024-003,36-50,photo_upload,Eczema,completed,0.88
+SCAN-2024-004,51-65,camera_capture,Psoriasis,completed,0.91
+SCAN-2024-005,65+,photo_upload,Benign Mole (Nevus),completed,0.89
+SCAN-2024-006,18-25,camera_capture,Acne Vulgaris,completed,0.94
+SCAN-2024-007,26-35,symptom_description,Rosacea,completed,0.78
+SCAN-2024-008,36-50,photo_upload,Contact Dermatitis,completed,0.86
+SCAN-2024-009,18-25,camera_capture,Folliculitis,completed,0.82
+SCAN-2024-010,51-65,photo_upload,Seborrheic Dermatitis,completed,0.87
+SCAN-2024-011,26-35,photo_upload,Urticaria (Hives),completed,0.90
+SCAN-2024-012,36-50,camera_capture,Eczema,completed,0.84
+SCAN-2024-013,65+,photo_upload,Benign Mole (Nevus),pending_review,0.72
+SCAN-2024-014,18-25,photo_upload,Acne Vulgaris,completed,0.95
+SCAN-2024-015,26-35,camera_capture,Contact Dermatitis,insufficient_quality,0.68
+SCAN-2024-016,51-65,photo_upload,Psoriasis,completed,0.89
+SCAN-2024-017,36-50,symptom_description,Rosacea,completed,0.75
+SCAN-2024-018,18-25,photo_upload,Folliculitis,completed,0.83
+SCAN-2024-019,65+,camera_capture,Seborrheic Keratosis,completed,0.88
+SCAN-2024-020,26-35,photo_upload,Urticaria (Hives),completed,0.91
+SCAN-2024-021,36-50,photo_upload,Eczema,completed,0.87
+SCAN-2024-022,51-65,camera_capture,Psoriasis,pending_review,0.74
+SCAN-2024-023,18-25,camera_capture,Acne Vulgaris,completed,0.93
+SCAN-2024-024,65+,photo_upload,Benign Mole (Nevus),completed,0.90
+SCAN-2024-025,26-35,symptom_description,Contact Dermatitis,completed,0.79
+
