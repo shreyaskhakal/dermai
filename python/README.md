@@ -1,356 +1,358 @@
-# DermaAI — Supplementary Academic Python Demonstration Suite 🔬📊
+# DermaAI – AI-Powered Skin Analysis & Dermatology Clinic Locator
 
-> [!IMPORTANT]
-> **STRICT ACADEMIC & PRODUCTION ISOLATION NOTICE:**  
-> The Python modules in this directory (`python/`) are **strictly supplementary academic demonstrations** created for educational, research, and algorithmic analysis purposes.  
-> 
-> They are **completely decoupled** from the live production application. They are **not** imported by, connected to, or deployed alongside:
-> - The live production frontend (HTML / CSS / JavaScript)
-> - The Node.js / Express backend server (`backend/server.js`)
-> - The live Google Gemini AI multimodal analysis integration
-> - Google Maps clinic locator integration
-> - Firebase authentication and regional analytics
-> - The Vercel serverless deployment (`vercel.json`)
-> - Any production build scripts or environment variables
+**DermaAI** is an AI-powered healthcare platform designed to help users understand common skin-related concerns through image-based analysis and connect with nearby dermatology clinics.
+
+The project combines web development, artificial intelligence, image processing, data analysis, and location-based services to create an accessible digital healthcare experience.
 
 ---
 
-## 1. Project Overview
+## 🌟 Project Overview
 
-**DermaAI** is an AI-powered dermatological wellness and clinic locator platform designed for the **Google Solution Challenge**, addressing **UN Sustainable Development Goal 3: Good Health and Well-being**. The production application provides rapid preliminary assessments via the Google Gemini API and connects users with nearby dermatologists via Google Maps.
+Skin-related problems are common, but accessing preliminary information and finding suitable dermatology services can sometimes be difficult.
 
-This supplementary Python module demonstrates how standard computer vision and data science methodologies operate under the hood in dermatological informatics workflows—from raw pixel pre-filtering to statistical population-level scan analytics.
+DermaAI aims to make this process easier by providing an interactive platform where users can:
 
----
+- Upload a skin image for AI-powered analysis.
+- Receive preliminary information about possible skin concerns.
+- Interact with an AI-powered assistant.
+- Find nearby dermatology clinics using location services.
+- Access a simple and user-friendly interface.
 
-## 2. Why Python in Dermatological Health Informatics?
+The project also includes Python-based image processing and data analysis modules that demonstrate how computer vision and data science techniques can be applied to healthcare-related applications.
 
-While lightweight web technologies (JavaScript, HTML5 canvas) and serverless cloud APIs (Gemini) power the interactive production client, **Python** is the global lingua franca of medical computer vision, data science, and biomedical research:
+## 🎯 Project Objectives
 
-1. **Standardized Deep Learning Preprocessing:** Benchmark dermatology datasets (such as the ISIC / International Skin Imaging Collaboration archive) standardize images to fixed matrices (e.g., $224 \times 224$ pixels) for deep convolutional neural networks (ResNet, EfficientNet, MobileNet).
-2. **Quality Gating & Artifact Detection:** Upstream quality controls—such as blur estimation via the Laplacian operator and exposure bounds—prevent degraded captures from causing false negatives.
-3. **Colorimetric & Morphological Feature Extraction:** Transforming images into specialized color representations (e.g., HSV) allows researchers to separate illumination from chromatic pigment information (erythema, melanin clustering).
-4. **Epidemiological & Telehealth Exploratory Data Analysis (EDA):** Aggregating and visualizing patient-reported concerns, intake modalities, and model certainty scores enables continuous auditing of healthcare AI systems.
-
----
-
-## 3. Technology Stack
-
-| Technology | Role & Educational Scope |
-| :--- | :--- |
-| **Python 3.10+** | Core programming language |
-| **OpenCV (`opencv-python`)** | Matrix-based image loading, resizing, color conversions (BGR $\to$ RGB, Grayscale, HSV), Gaussian smoothing, and Laplacian second-derivative filtering |
-| **NumPy** | Array computations, statistical variance, pixel clipping ratios, and array broadcasting |
-| **Pandas** | Tabular scan dataset ingestion, schema validation, grouping, and statistical distribution computations |
-| **Matplotlib** | Headless (`Agg` backend) data visualization: horizontal bar charts, modality pie charts, and confidence distribution plots |
-| **Pillow (PIL)** | Image format encoding and verification fallback |
-| **unittest** | Native Python automated test suite verifying edge cases, matrix dimensions, and analytical functions |
+1. Develop an accessible AI-powered skin analysis platform.
+2. Apply artificial intelligence to preliminary skin image analysis.
+3. Explore image processing techniques using Python and OpenCV.
+4. Analyze structured data using Pandas and NumPy.
+5. Visualize data using Matplotlib.
+6. Help users locate nearby dermatology clinics.
+7. Combine frontend and backend technologies to build a functional web application.
 
 ---
 
-## 4. Directory & File Structure
+## ✨ Key Features
+
+### 1. AI-Powered Skin Analysis
+- Upload skin images for analysis.
+- Generate AI-powered preliminary insights.
+- Display analysis results through an interactive interface.
+- Provide information about possible skin-related concerns.
+
+### 2. AI Assistant
+- Interactive AI-powered assistance.
+- Text-based interaction for skin-related queries.
+- Easy-to-understand responses.
+
+### 3. Dermatology Clinic Locator
+- Location-based clinic discovery.
+- Integration with Google Maps API.
+- Helps users identify nearby dermatology services.
+
+### 4. User Interface
+- Responsive web interface.
+- Simple navigation and accessible design.
+- Organized analysis and results sections.
+
+### 5. Python Image Processing
+- Image loading and validation.
+- Image resizing and color conversion.
+- Grayscale conversion.
+- Gaussian blur and image preprocessing.
+- Basic image quality evaluation.
+
+### 6. Data Analysis and Visualization
+- CSV dataset processing.
+- Statistical calculations.
+- Analysis of reported skin concerns.
+- Data visualization through charts.
+- Export of summary statistics.
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Programming Languages | Python, JavaScript |
+| Frontend | HTML5, CSS3, Vanilla JavaScript |
+| Backend | Node.js, Express.js |
+| AI Integration | AI-powered analysis and text processing |
+| Image Processing | Python, OpenCV, Pillow |
+| Numerical Computing | NumPy |
+| Data Analysis | Pandas |
+| Data Visualization | Matplotlib |
+| Location Services | Google Maps API |
+| Authentication & Analytics | Firebase |
+| Deployment | Vercel |
+
+### How Python Is Used
+
+Python is used in the project's image processing and data analysis components.
+
+The Python modules demonstrate:
+
+- Computer vision operations using OpenCV.
+- Numerical image operations using NumPy.
+- Dataset processing using Pandas.
+- Statistical analysis and visualization using Matplotlib.
+- Image quality measurements and feature extraction.
+
+The live web application uses a Node.js and Express.js backend. The Python modules are maintained separately as part of the project's broader implementation.
+
+---
+
+## 🐍 Python Modules
+
+The project contains a dedicated `python/` directory with the following modules.
+
+| Module | Description |
+|---|---|
+| `image_preprocessing.py` | Loads, validates, resizes, and processes images. |
+| `image_quality_check.py` | Evaluates image resolution, brightness, and sharpness. |
+| `image_feature_analysis.py` | Extracts basic color, contrast, and image statistics. |
+| `scan_data_analysis.py` | Processes scan datasets and generates visualizations. |
+| `run_demo.py` | Runs the complete Python demonstration pipeline. |
+
+### Image Preprocessing
+
+Uses OpenCV and NumPy to perform:
+
+- Image loading and validation.
+- Resizing to 224 × 224 pixels.
+- RGB and grayscale conversion.
+- Gaussian smoothing.
+- Saving processed images.
+
+### Image Quality Analysis
+
+Evaluates basic image properties:
+
+- Image dimensions.
+- Average brightness.
+- Sharpness estimation using Laplacian variance.
+- Underexposure and overexposure measurements.
+
+### Image Feature Analysis
+
+Extracts descriptive image statistics:
+
+- Mean Hue.
+- Mean Saturation.
+- Mean Brightness.
+- Grayscale intensity.
+- Standard deviation.
+- Image dimensions and aspect ratio.
+
+### Scan Data Analysis
+
+Uses Pandas and Matplotlib to:
+
+- Read CSV datasets.
+- Calculate category distributions.
+- Analyze reported concerns.
+- Calculate confidence-score statistics.
+- Generate charts and summary CSV files.
+
+---
+
+## 📁 Python Project Structure
 
 ```text
 python/
-├── README.md                      # Comprehensive academic documentation (this file)
-├── requirements.txt               # Standalone Python dependencies (isolated from package.json)
-├── .gitignore                     # Ignores .venv, bytecode, and demo_output artifacts
-├── run_demo.bat                   # 1-Click Windows Command Prompt launcher
-├── run_demo.ps1                   # 1-Click Windows PowerShell launcher
-├── run_demo.sh                    # 1-Click macOS / Linux Bash launcher
-├── dermai_academic_demo.ipynb     # Interactive Jupyter Notebook demonstration
+│
+├── README.md
+├── requirements.txt
+├── run_demo.bat
+├── run_demo.ps1
+├── run_demo.sh
+├── dermai_academic_demo.ipynb
+│
 ├── sample_data/
-│   ├── sample_scans.csv           # 25 synthetic illustrative scan records (non-PHI)
-│   └── sample_images/             # 5 illustrative test skin images:
-│       ├── normal_skin_patch.png        # Uniform normal skin tone simulation
-│       ├── pigmented_mole_patch.png     # Sharp pigmented melanocytic nevus patch
-│       ├── erythema_rash_patch.png      # Diffuse red inflammatory erythema patch
-│       ├── blurry_capture_sample.png    # Motion/optical blur sample (tests quality gate)
-│       └── glare_overexposed_sample.png # Flash specular highlight sample (tests exposure gate)
+│   ├── sample_scans.csv
+│   └── sample_images/
+│       ├── normal_skin_patch.png
+│       ├── pigmented_mole_patch.png
+│       ├── erythema_rash_patch.png
+│       ├── blurry_capture_sample.png
+│       └── glare_overexposed_sample.png
+│
 ├── dermai_python/
-│   ├── __init__.py                # Package initialization with PEP 562 lazy loading
-│   ├── image_preprocessing.py     # OpenCV pipeline: load, validate, resize (224x224), blur, save
-│   ├── image_quality_check.py     # Heuristics: resolution, brightness, blur/sharpness, exposure
-│   ├── image_feature_analysis.py  # Colorimetric (HSV) and contrast/dynamic range statistics
-│   ├── scan_data_analysis.py      # Pandas & Matplotlib EDA, bar/pie charts, CSV export
-│   └── run_demo.py                # Central CLI runner coordinating all modules
+│   ├── __init__.py
+│   ├── image_preprocessing.py
+│   ├── image_quality_check.py
+│   ├── image_feature_analysis.py
+│   ├── scan_data_analysis.py
+│   └── run_demo.py
+│
 └── tests/
-    └── test_modules.py            # Automated unit test suite (31 unit tests)
+    └── test_modules.py
 ```
 
 ---
 
-## 5. Module Descriptions & Technical Methodology
+## ⚙️ Installation and Setup
 
-### A. `image_preprocessing.py`
-Provides standard computer vision pre-processing transformations required before feeding dermoscopic imagery into convolutional neural networks:
-- **Image Validation:** Verifies array validity, non-empty buffers, positive dimensions, and channels.
-- **Dimensional Standardization:** Resizes inputs to $224 \times 224$ pixels via area interpolation (`cv2.INTER_AREA`), the canonical resolution for CNN transfer learning.
-- **Color Space Normalization:** Converts OpenCV's native BGR layout to standard RGB.
-- **Grayscale Conversion:** Isolates luminance signals for structural and texture gradient analysis.
-- **Gaussian Smoothing:** Suppresses high-frequency camera noise and skin hair artifacts using a 2D Gaussian kernel ($5 \times 5$).
-- **Safe Persistence:** Encodes and writes processed matrices using Unicode-safe file streams.
+### Requirements
 
-### B. `image_quality_check.py`
-Implements basic pre-flight heuristics to evaluate whether an image is optically suitable for analysis:
-- **Resolution Gate:** Confirms pixel width and height meet minimum thresholds ($\ge 150 \times 150$).
-- **Luminance Calculation:** Computes the arithmetic mean intensity across pixels ($0.0$ to $255.0$).
-- **Sharpness Estimation via Laplacian Variance:**
-  $$\text{Score} = \text{Var}\left(\nabla^2 I\right) = \text{Var}\left(\frac{\partial^2 I}{\partial x^2} + \frac{\partial^2 I}{\partial y^2}\right)$$
-  Images with sharp edges yield high variance; out-of-focus or motion-blurred captures yield low variance ($\text{Score} < 100.0$).
-- **Exposure Anomaly Detection:** Calculates the percentage of underexposed shadow-clipped pixels ($\le 10$) and overexposed specular-glare pixels ($\ge 245$).
+- Python 3.10 or later
+- Node.js and npm
+- Visual Studio Code (recommended)
+- Git
 
-### C. `image_feature_analysis.py`
-Extracts objective, descriptive statistical metrics from color and grayscale representations:
-- **HSV Colorimetric Profiling:** Decomposes images into **Hue** (dominant spectral wavelength, $0\text{--}179$), **Saturation** (chromatic purity, $0\text{--}255$), and **Value** (brightness, $0\text{--}255$).
-- **Contrast & Dispersion:** Computes standard deviation of pixel intensities $\sigma_I$ and dynamic range ($\text{Max} - \text{Min}$).
-- **Spatial Geometry:** Reports width, height, channel count, and aspect ratio.
+### 1. Clone the Repository
 
-### D. `scan_data_analysis.py`
-Performs exploratory data analysis on synthetic telehealth scan logs:
-- **Schema Validation:** Verifies presence and data types of required columns (`scan_id`, `age_group`, `input_type`, `reported_concern`, `analysis_status`, `confidence_score`).
-- **Modality Distributions:** Calculates frequency counts and percentages for capture types (`photo_upload`, `camera_capture`, `symptom_description`).
-- **Condition Prevalence:** Summarizes user-reported conditions (e.g., Acne Vulgaris, Eczema, Psoriasis).
-- **Statistical Aggregation:** Computes mean and standard deviation of model confidence scores grouped by condition.
-- **Chart Generation:** Saves high-resolution ($300\text{ DPI}$) visual figures (`reported_concerns_distribution.png`, `input_types_distribution.png`, `confidence_by_concern.png`).
-- **Data Export:** Exports summary metrics to `scan_summary_statistics.csv`.
+```bash
+git clone https://github.com/shreyaskhakal/dermai.git
+```
 
-### E. `run_demo.py`
-Central interactive command-line interface that orchestrates all four modules into a unified educational pipeline. Supports custom arguments, custom image paths, and synthetic test patch generation.
+Navigate to the project directory:
 
----
+```bash
+cd dermai
+```
 
-## 6. Installation & Environment Setup
+### 2. Set Up the Python Environment
 
-It is strongly recommended to execute these modules in an isolated Python virtual environment (`.venv`):
+Navigate to the Python directory:
 
-### 1. Open Terminal and Navigate to the `python/` Directory
 ```bash
 cd python
 ```
 
-### 2. Create and Activate a Virtual Environment
+Create a virtual environment:
 
-**On Windows (PowerShell):**
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-```
-
-**On Windows (Command Prompt `cmd`):**
-```cmd
-python -m venv .venv
-.\.venv\Scripts\activate.bat
-```
-
-**On macOS / Linux:**
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
 ```
 
-### 3. Install Requirements
+Activate it on Windows:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+### 3. Install Python Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
----
+### 4. Run the Python Demonstration
 
-## 7. Execution Guide
+Run the complete image processing and data analysis pipeline:
 
-### Option 1: 1-Click Launchers (Windows)
-You can directly run the demonstration without configuring CLI arguments:
-- **Command Prompt:** Double-click `run_demo.bat` or run `.\run_demo.bat`
-- **PowerShell:** Run `.\run_demo.ps1`
-
-### Option 2: Run Full End-to-End Demonstration via Python (Recommended)
-Automatically runs dataset analytics, creates a synthetic dermoscopic patch, and performs image preprocessing, quality checks, and feature extraction:
 ```bash
 python -m dermai_python.run_demo
 ```
 
-### Option 3: Run Demonstration with Your Own Skin Image
+Run the demonstration with a custom image:
+
 ```bash
-python -m dermai_python.run_demo --image path/to/your_skin_photo.jpg
+python -m dermai_python.run_demo --image path/to/image.jpg
 ```
 
-### Option 4: Run Demonstration with a Custom CSV Dataset
+Run it with a custom CSV dataset:
+
 ```bash
 python -m dermai_python.run_demo --csv sample_data/sample_scans.csv
 ```
 
-### Option 5: Custom Output Directory
-```bash
-python -m dermai_python.run_demo --output-dir custom_demo_output
-```
-
-### Option 6: Interactive Jupyter Notebook Walkthrough
-Launch Jupyter to explore step-by-step visual markdown cells and inline plots:
-```bash
-jupyter notebook dermai_academic_demo.ipynb
-```
-
----
-
-## 8. Running Individual Modules Independently
-
-Each module is fully self-contained and executable as a standalone script:
-
-```bash
-# 1. Preprocessing (loads or generates a test patch, resizes to 224x224, applies blur)
-python -m dermai_python.image_preprocessing
-
-# 2. Quality Check (computes brightness, Laplacian variance sharpness, and exposure)
-python -m dermai_python.image_quality_check
-
-# 3. Descriptive Feature Extraction (extracts HSV color values, contrast, and dimensions)
-python -m dermai_python.image_feature_analysis
-
-# 4. Scan Data Analysis (loads CSV, computes distributions, exports charts and summary CSV)
-python -m dermai_python.scan_data_analysis
-```
-
----
-
-## 9. Running the Unit Test Suite
-
-An automated unit test suite (`tests/test_modules.py`) verifies matrix shapes, math accuracy, and error handling across 27 distinct test cases:
+### 5. Run Python Unit Tests
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-Expected output:
-```text
-----------------------------------------------------------------------
-Ran 31 tests in 11.145s
+### 6. Run the Web Application
 
-OK
+Return to the root project directory and install the Node.js dependencies:
+
+```bash
+npm install
+```
+
+Configure the required environment variables according to the project configuration and start the application using its available development script.
+
+---
+
+## 📊 Demonstration and Outputs
+
+The Python modules demonstrate different stages of image processing and data analysis.
+
+| Demonstration | Output |
+|---|---|
+| Image preprocessing | Resized and processed images |
+| Image quality analysis | Brightness and sharpness report |
+| Feature extraction | HSV and grayscale statistics |
+| Dataset analysis | Statistical summaries |
+| Data visualization | Bar charts and pie charts |
+| Data export | Summary CSV files |
+
+The sample dataset contains 25 illustrative synthetic scan records. It is intended for demonstrating data analysis and visualization workflows.
+
+---
+
+## 🧪 Testing
+
+The Python project includes a unit testing suite to verify the functionality of its modules.
+
+Testing covers:
+
+- Image processing operations.
+- Image dimensions and validation.
+- Image quality calculations.
+- Statistical calculations.
+- Data analysis functions.
+- Error handling.
+
+Run the tests using:
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
 ---
 
-## 10. Sample Demonstration Output
+## 🔮 Future Scope
 
-```text
-====================================================================
-            DERMAAI PYTHON ACADEMIC DEMONSTRATION SUITE             
-====================================================================
-Welcome to the DermaAI supplementary educational computer vision suite.
-This suite illustrates data science and image processing techniques
-applied in automated dermatology and medical informatics workflows.
+The project can be extended with several additional features:
 
->> Working Output Directory: C:\Users\user5\Downloads\DERMAI\python\demo_output
-
---------------------------------------------------------------------
-  STEP 1: EXPLORATORY SCAN DATASET ANALYSIS (PANDAS & MATPLOTLIB)   
---------------------------------------------------------------------
-Loading scan records from: sample_scans.csv
-
-[OK] Successfully loaded 25 scan records.
-Columns in dataset: scan_id, age_group, input_type, reported_concern, analysis_status, confidence_score
-
---- REPORTED CONCERNS DISTRIBUTION ---
-  * Acne Vulgaris           :  4 scans ( 16.0%)
-  * Contact Dermatitis      :  4 scans ( 16.0%)
-  * Eczema                  :  3 scans ( 12.0%)
-  * Psoriasis               :  3 scans ( 12.0%)
-  * Benign Mole (Nevus)     :  3 scans ( 12.0%)
-
---- INPUT MODALITY DISTRIBUTION ---
-  * photo_upload            : 13 scans ( 52.0%)
-  * camera_capture          :  9 scans ( 36.0%)
-  * symptom_description     :  3 scans ( 12.0%)
-
---- MODEL CONFIDENCE METRICS (ILLUSTRATIVE) ---
-  Mean: 0.852 | Median: 0.870 | Min: 0.680 | Max: 0.950 | Std: 0.072
-
---- GENERATED VISUALIZATIONS & ARTIFACTS ---
-  [Chart] reported_concerns_bar     : reported_concerns_distribution.png
-  [Chart] input_types_pie           : input_types_distribution.png
-  [Chart] confidence_by_concern_bar : confidence_by_concern.png
-  [CSV]   Statistical Summary       : scan_summary_statistics.csv
-
---------------------------------------------------------------------
-  STEP 2: COMPUTER VISION IMAGE ANALYSIS PIPELINE (OPENCV & NUMPY)  
---------------------------------------------------------------------
-Generating illustrative synthetic dermoscopic test image at: synthetic_dermoscopic_patch.png
-
->> [2.1] Executing Image Preprocessing...
-  - Original Dimensions : (320, 320, 3)
-  - Resized (Target)    : (224, 224, 3) (224x224 RGB)
-  - Preprocessing saved : ['resized', 'grayscale', 'blurred']
-
->> [2.2] Evaluating Optical Quality Heuristics...
-============================================================
-          DERMAI IMAGE QUALITY EVALUATION REPORT            
-============================================================
-Image Resolution      : 224 x 224 (3 channels)
-Resolution Gate       : PASS (Req: >= 150x150)
-Average Brightness    : 190.73 / 255.0
-Sharpness Score       : 8.31 (Blur Threshold: 100.0)
-Blur Classification   : POTENTIALLY BLURRY
-Exposure Status       : BALANCED_EXPOSURE
-  - Dark Pixels <= 10 : 0.0%
-  - Glare Pixels >=245: 0.08%
-------------------------------------------------------------
-Overall Quality Gate  : SUBOPTIMAL_QUALITY_DETECTED
-============================================================
->> NOTICE: These generic heuristics measure basic optical sharpness, exposure, and pixel dimensions. They DO NOT evaluate diagnostic validity or dermatological suitability.
-============================================================
-
->> [2.3] Extracting Descriptive Colorimetric & Contrast Features...
-============================================================
-        DERMAI DESCRIPTIVE IMAGE FEATURE REPORT             
-============================================================
-1. Spatial Geometry & Dimensions:
-   - Width x Height      : 224 x 224 px
-   - Aspect Ratio        : 1.0
-   - Color Channels      : 3
-   - Total Pixels        : 50,176
-
-2. Color Space Characteristics (HSV):
-   - Mean Hue (0-179)    : 9.47 (Std: 1.39)
-   - Mean Saturation     : 72.94 / 255.0 (Std: 21.07)
-   - Mean Value/Brightness: 221.87 / 255.0 (Std: 33.49)
-
-3. Intensity & Contrast Metrics (Grayscale):
-   - Mean Intensity      : 190.73 / 255.0
-   - Standard Deviation  : 36.27 (Contrast dispersion)
-   - Dynamic Range       : 69.0 to 255.0 (Span: 186.0)
-============================================================
->> NOTICE: The extracted features are generic statistical computer vision metrics. They do NOT constitute clinical biomarkers or medical diagnoses.
-============================================================
-
-====================================================================
-                       DEMONSTRATION COMPLETE                       
-====================================================================
-All supplementary academic modules executed successfully.
-Generated artifacts and visualizations saved under:
-  --> C:\Users\user5\Downloads\DERMAI\python\demo_output
-```
+1. Integration of dedicated dermatology image classification models.
+2. Improved image preprocessing and quality assessment.
+3. Support for larger dermatology image datasets.
+4. Advanced statistical analysis and visualization.
+5. Multilingual AI assistance.
+6. Appointment booking and clinic management.
+7. User health history and report management.
+8. Integration with additional healthcare services.
 
 ---
 
-## 11. Academic Learning Outcomes
+## ⚠️ Important Note
 
-By studying and running this supplementary suite, students and researchers explore:
-1. **Pipeline Decoupling in Healthtech:** Structuring algorithmic experiments in separate, non-intrusive modules while preserving production web app stability.
-2. **Matrix Preprocessing for Medical Imaging:** Understanding why neural network backbones require fixed dimensions, channel conversions, and smoothing.
-3. **Signal Quality Gating:** Using classical computer vision (Laplacian second derivatives and histogram clipping) to catch poor captures before model inference.
-4. **Colorimetric Decomposition:** Learning why HSV representations facilitate erythema and lesion boundary analysis more effectively than raw RGB values.
-5. **Exploratory Telehealth Analytics:** Visualizing intake modalities and confidence distributions across demographic cohorts to monitor AI system behavior.
+DermaAI provides preliminary AI-generated information and is not a substitute for professional medical evaluation. Its outputs should not be treated as confirmed diagnoses or treatment recommendations. Users should consult qualified healthcare professionals for medical concerns.
+
+The Python sample dataset and illustrative images are synthetic demonstration data and do not represent actual patients or clinical outcomes.
 
 ---
 
-## 12. Limitations & Medical Disclaimer
+## 👨‍💻 Project Information
 
-> [!CAUTION]
-> **STRICT MEDICAL DISCLAIMER:**  
-> The algorithms, scripts, heuristics, and statistical metrics contained in this Python module are **purely academic demonstrations** of computational techniques.
-> 
-> - They **do NOT** constitute medical advice, clinical diagnoses, treatment plans, or medical devices.
-> - They **must NOT** be used to screen, diagnose, or manage any skin condition, lesion, melanoma, or dermatological disease.
-> - The sample dataset is **100% synthetic** and does not represent real patients or actual clinical outcomes.
-> - Always consult a board-certified dermatologist or qualified healthcare professional for medical concerns.
+**Project Name:** DermaAI
+
+**Domain:** Artificial Intelligence, Healthcare Technology, Computer Vision and Data Science
+
+**Repository:** [GitHub – DermaAI](https://github.com/shreyaskhakal/dermai)
+
+**Live Application:** [DermaAI](https://dermai2.vercel.app/)
+
+---
+
+## 📜 Conclusion
+
+DermaAI demonstrates how modern web technologies, artificial intelligence, Python programming, computer vision, and data analytics can be combined to develop a healthcare-focused application.
+
+The project brings together practical software development and data science concepts to explore how technology can improve access to preliminary health information and dermatology services.
 
