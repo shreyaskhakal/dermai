@@ -1,4 +1,4 @@
-# DermAI 🩺 - Google Solution Challenge
+# DermAI 🩺 
 
 DermAI is an AI-powered skin disease analysis and clinic locator application built for the **Google Solution Challenge**. The application aims to democratize access to dermatological insights by providing instant, AI-driven skin assessments and connecting users with local healthcare professionals.
 
@@ -14,12 +14,16 @@ DermAI directly addresses **Goal 3: Good Health and Well-being** by promoting ac
 *   **🔐 Authentication**: Secure user sign-in and session management.
 
 ## 💻 Tech Stack
-*   **Frontend**: HTML, CSS, Vanilla JavaScript
-*   **Backend**: Node.js, Express
-*   **AI Model**: Google Gemini API
-*   **Location Services**: Google Maps API
-*   **Analytics**: Firebase
-*   **Deployment**: Vercel
+
+* **Frontend**: HTML5, CSS3, Vanilla JavaScript
+* **Backend**: Python, Node.js, Express.js
+* **AI Integration**: AI-powered skin analysis and intelligent text processing
+* **Image Processing**: Python, OpenCV, NumPy
+* **Data Analysis**: Pandas, NumPy
+* **Data Visualization**: Matplotlib
+* **Location Services**: Google Maps API
+* **Analytics & Database Services**: Firebase
+* **Deployment**: Vercel
 
 ## 🚀 Getting Started
 
